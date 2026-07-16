@@ -1,4 +1,4 @@
-"""Non-interactive CLI for synthetic generation and validation."""
+"""Non-interactive CLI for generation, validation, and baseline analysis."""
 
 import argparse
 import asyncio
@@ -11,7 +11,10 @@ from zoneinfo import ZoneInfo
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from workflowtwin.analytics.reporting import AnalysisArtifactExistsError
+from workflowtwin.cli.analyze import configure_analyze_parser, run_analyze
 from workflowtwin.core.config import get_settings
+from workflowtwin.services.baseline_analysis import AnalysisInputError
 from workflowtwin.services.synthetic_generation import (
     GenerationPersistenceError,
     SyntheticGenerationService,
@@ -68,6 +71,7 @@ def _parser() -> argparse.ArgumentParser:
     validate.add_argument("--dataset", type=Path, required=True)
     validate.add_argument("--report-output", type=Path)
     validate.add_argument("--force", action="store_true")
+    configure_analyze_parser(subparsers)
     return parser
 
 
@@ -151,8 +155,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.command == "generate":
             return _generate(args)
+        if args.command == "analyze":
+            return run_analyze(args)
         return _validate(args)
     except (
+        AnalysisArtifactExistsError,
+        AnalysisInputError,
         ArtifactExistsError,
         GenerationPersistenceError,
         OSError,
