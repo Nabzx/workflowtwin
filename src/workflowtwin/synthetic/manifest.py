@@ -1,10 +1,9 @@
 """Stable fingerprinting and manifest construction."""
 
-import hashlib
-import json
 from collections import Counter
 from datetime import datetime, timedelta
 
+from workflowtwin.analytics.fingerprint import dataset_fingerprint as dataset_fingerprint
 from workflowtwin.domain.referrals.models import ReferralCase, ReferralEvent
 from workflowtwin.synthetic.config import GenerationConfig
 from workflowtwin.synthetic.models import GenerationGroundTruth, GenerationManifest
@@ -19,16 +18,6 @@ EXPECTED_FINDINGS = (
     "Respiratory should show more failed scheduling attempts and longer booking time.",
     "Dermatology reassignment paths should show more handoffs, touches, and cycle time.",
 )
-
-
-def dataset_fingerprint(cases: tuple[ReferralCase, ...], events: tuple[ReferralEvent, ...]) -> str:
-    """Hash canonical ordered operational contracts, excluding synthetic labels."""
-    payload = {
-        "cases": [case.model_dump(mode="json") for case in cases],
-        "events": [event.model_dump(mode="json") for event in events],
-    }
-    canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 
 def build_manifest(
