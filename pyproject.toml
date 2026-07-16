@@ -20,6 +20,9 @@ dependencies = [
     "uvicorn[standard]>=0.34,<1",
 ]
 
+[project.scripts]
+workflowtwin = "workflowtwin.cli.main:entrypoint"
+
 [project.optional-dependencies]
 dev = [
     "httpx>=0.28,<1",
