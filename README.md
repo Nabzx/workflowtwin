@@ -45,7 +45,7 @@ It will:
 - simulate the recommendation's expected operational effect; and
 - compare baseline and simulated metrics without presenting synthetic results as clinical evidence.
 
-The current release includes the API foundation and the first versioned referral case and event data model. It contains no large synthetic dataset generator, process mining, LLM calls, workflow automation, dashboard, authentication, or external integration.
+The current release includes the API foundation, the first versioned referral event model, and a seeded synthetic operational-data generator. It contains no process mining, bottleneck-detection engine, LLM calls, workflow automation, dashboard, authentication, or external integration.
 
 ## Architecture
 
@@ -82,6 +82,7 @@ The version 1 operational model is intentionally small and excludes direct patie
 
 - `referral_cases` stores one current, queryable projection for each process instance: stable internal and external identities, referral source, service line, lifecycle status, receipt and closure times, synthetic marker, schema version, and audit timestamps.
 - `referral_events` stores immutable recorded facts: case and source identities, event and ingestion times, operational activity, actor, source system, channel, manual-work flag, structured reason, bounded metadata, and schema version.
+- `synthetic_generation_runs` records generation configuration, status, counts, fingerprint, manifest, timestamps, and failure context for idempotent persistence.
 
 `event_at` is the source system's claim about when an activity happened. `ingested_at` is when WorkflowTwin accepted the fact. Keeping both allows later analysis to reconstruct event-time flow while retaining delayed and out-of-order arrivals and reproducing what was known at an ingestion watermark.
 
@@ -90,6 +91,57 @@ Events are append-only in ordinary operation. Frozen domain contracts, SQLAlchem
 Ten deterministic, fictional fixtures cover straight-through completion, one and repeated information loops, recategorisation and reassignment, scheduling failures, cancellation, rejection, inactivity, duplicate source identity, and delayed ingestion. They are compact evaluation cases for the next analytical stages, not the full synthetic dataset generator.
 
 See the [Northstar workflow](docs/architecture/northstar-referral-workflow.md), [metric definitions](docs/architecture/metric-definitions.md), and [event-model decision](docs/decisions/0002-event-data-model.md).
+
+## Synthetic data generator
+
+The generator produces coherent `ReferralCase` and `ReferralEvent` contracts from one explicitly seeded `random.Random` instance. UUID5 identifiers, case paths, timing, labels, and the SHA-256 operational-data fingerprint are stable for the same effective configuration and run identifier.
+
+Administrative timing follows configurable working hours and weekend handling. External information responses use elapsed time, while subsequent staff activity waits for the next working period. Background variation includes weekday volumes, source and service mixes, processing ranges, outcomes, repeated work, handoffs, and data latency.
+
+The default Northstar assumptions plant four detectable but probabilistic signals:
+
+| Segment | Intended signal |
+| --- | --- |
+| GP practice referrals | higher initial incompleteness, information waits, and manual touches |
+| Neurology | longer categorisation-to-team-assignment waiting time |
+| Respiratory | more failed scheduling attempts and longer booking time |
+| Dermatology reassignment path | more handoffs, rework, touches, and cycle time |
+
+Valid controlled defects include delayed and out-of-order ingestion, missing optional actor identifiers, unexpected valid channels, structurally valid source inconsistencies, and source retries. Duplicate-source attempts are labelled in ground truth but excluded from canonical events, preserving the database uniqueness constraint.
+
+Ground truth is exported separately and never added to operational event metadata. The machine-readable manifest distinguishes configured probabilities, realised counts and rates, planted signals, expected qualitative findings, and the stable dataset fingerprint. All output is fictional and must not be represented as evidence about real providers or clinical outcomes.
+
+Generate the small development preset:
+
+```bash
+uv run workflowtwin generate --preset tiny
+```
+
+Generate an independently loadable demonstration bundle:
+
+```bash
+uv run workflowtwin generate \
+  --preset demo \
+  --seed 42 \
+  --run-id northstar-demo-42 \
+  --dataset-output artifacts/generation/demo-dataset.json \
+  --validation-output artifacts/generation/demo-validation.json
+
+uv run workflowtwin validate \
+  --dataset artifacts/generation/demo-dataset.json \
+  --report-output artifacts/generation/demo-independent-validation.json
+```
+
+Persist a run after applying migrations:
+
+```bash
+uv run alembic upgrade head
+uv run workflowtwin generate --preset demo --run-id northstar-demo-42 --persist
+```
+
+Replaying a completed run with the same fingerprint returns `already_completed`; using its identifier for different data fails. Cases and canonical events flush in configurable batches inside one transaction. A failure rolls back all operational rows and records the run as failed.
+
+Presets are `tiny` (30 cases), `demo` (1,000), and `full` (10,000). Generated files under `artifacts/generation/` are ignored and should not be committed. See the [generator architecture](docs/architecture/synthetic-data-generation.md) and [ADR 0003](docs/decisions/0003-deterministic-synthetic-generation.md).
 
 ## Planned metrics
 
@@ -109,12 +161,13 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 
 1. **Foundation (completed):** API skeleton, settings, structured logging, testing, PostgreSQL containers, migration tooling, documentation, and quality gates.
 2. **Referral event model (completed):** versioned contracts, explicit vocabulary, UTC timestamps, append-only PostgreSQL persistence, first migration, metric semantics, and ten deterministic fixtures.
-3. **Synthetic dataset:** create a seeded, configurable generator from the validated contracts, persist batches idempotently, and report generation assumptions and data quality.
-4. **Process intelligence:** reconstruct variants with PM4Py where useful, implement metric definitions, detect the leading bottleneck, and expose evidence through the API.
-5. **Recommendation and simulation:** add a deterministic first recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
-6. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
-7. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
-8. **Evaluation and observability:** instrument traces and model/provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact.
+3. **Synthetic dataset (completed):** seeded configuration, business-time generation, planted bottlenecks, controlled defects, separate ground truth, manifests, validation, CLI presets, and idempotent batch persistence.
+4. **Operational metrics and baseline analysis:** implement the documented deterministic metrics, produce case and cohort summaries, and establish a reproducible baseline before process mining.
+5. **Process intelligence:** reconstruct variants with PM4Py where useful, detect the leading bottleneck, and expose evidence through the API.
+6. **Recommendation and simulation:** add a deterministic first recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
+7. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
+8. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
+9. **Evaluation and observability:** instrument traces and model/provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact.
 
 ## Repository layout
 
