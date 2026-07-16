@@ -101,6 +101,7 @@ def _unique_events(events: list[ReferralEvent]) -> tuple[ReferralEvent, ...]:
 def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> CaseMetrics:
     """Calculate all version 1 metrics without accessing synthetic ground truth."""
     events = timeline.events
+    event_position = {event.id: index for index, event in enumerate(events)}
     by_type: dict[EventType, list[ReferralEvent]] = {}
     for event in events:
         by_type.setdefault(event.event_type, []).append(event)
@@ -235,13 +236,15 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
     )
 
     counts = Counter(event.event_type for event in events)
-    rework_count = (
-        max(0, counts[EventType.COMPLETENESS_CHECK_COMPLETED] - 1)
-        + max(0, counts[EventType.MISSING_INFORMATION_REQUESTED] - 1)
-        + counts[EventType.REFERRAL_RECATEGORISED]
+    inferred_rework_count = max(0, counts[EventType.COMPLETENESS_CHECK_COMPLETED] - 1) + max(
+        0, counts[EventType.MISSING_INFORMATION_REQUESTED] - 1
+    )
+    explicit_rework_count = (
+        counts[EventType.REFERRAL_RECATEGORISED]
         + counts[EventType.CLINICAL_TEAM_REASSIGNED]
         + counts[EventType.APPOINTMENT_SCHEDULING_FAILED]
     )
+    rework_count = inferred_rework_count + explicit_rework_count
     rework_events = tuple(
         event
         for event in events
@@ -256,8 +259,8 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
         MetricName.REWORK_COUNT,
         rework_count,
         "events",
-        MetricStatus.CALCULATED,
-        MetricPrecision.EXACT,
+        MetricStatus.ESTIMATED if inferred_rework_count else MetricStatus.CALCULATED,
+        MetricPrecision.ESTIMATED if inferred_rework_count else MetricPrecision.EXACT,
         events=rework_events,
         assumptions=("repeat counts follow metric definition version 1",),
     )
@@ -319,11 +322,12 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
             MetricName.FIRST_PASS_COMPLETE, "boolean", "missing completeness check"
         )
     else:
+        check_position = event_position[first_check.id]
+        category_position = event_position[first_category.id] if first_category else len(events)
         requests_after_check = [
             event
             for event in by_type.get(EventType.MISSING_INFORMATION_REQUESTED, [])
-            if event.event_at >= first_check.event_at
-            and (first_category is None or event.event_at < first_category.event_at)
+            if check_position < event_position[event.id] < category_position
         ]
         if first_category is None and not requests_after_check:
             metrics[MetricName.FIRST_PASS_COMPLETE] = _unavailable(
@@ -391,16 +395,19 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
     if received and first_check:
         waiting_intervals.append((received, first_check))
     responses = list(by_type.get(EventType.MISSING_INFORMATION_RECEIVED, []))
-    response_index = 0
+    used_response_ids = set()
     for request in by_type.get(EventType.MISSING_INFORMATION_REQUESTED, []):
-        while (
-            response_index < len(responses)
-            and responses[response_index].event_at < request.event_at
-        ):
-            response_index += 1
-        response = responses[response_index] if response_index < len(responses) else None
+        response = next(
+            (
+                candidate
+                for candidate in responses
+                if candidate.id not in used_response_ids
+                and event_position[candidate.id] > event_position[request.id]
+            ),
+            None,
+        )
         if response is not None:
-            response_index += 1
+            used_response_ids.add(response.id)
         waiting_intervals.append((request, response))
     scheduling_starts = list(by_type.get(EventType.APPOINTMENT_SCHEDULING_STARTED, []))
     assignments = sorted(
@@ -413,13 +420,20 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
     if assignments and scheduling_starts:
         first_start = scheduling_starts[0]
         prior_assignments = [
-            event for event in assignments if event.event_at <= first_start.event_at
+            event
+            for event in assignments
+            if event_position[event.id] < event_position[first_start.id]
         ]
         if prior_assignments:
             waiting_intervals.append((prior_assignments[-1], first_start))
     for failure in by_type.get(EventType.APPOINTMENT_SCHEDULING_FAILED, []):
         next_start = next(
-            (event for event in scheduling_starts if event.event_at > failure.event_at), None
+            (
+                event
+                for event in scheduling_starts
+                if event_position[event.id] > event_position[failure.id]
+            ),
+            None,
         )
         waiting_intervals.append((failure, next_start))
 
@@ -473,7 +487,9 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
     first_assignment = next(iter(by_type.get(EventType.CLINICAL_TEAM_ASSIGNED, [])), None)
     if categorisations and first_assignment:
         prior_categories = [
-            event for event in categorisations if event.event_at <= first_assignment.event_at
+            event
+            for event in categorisations
+            if event_position[event.id] < event_position[first_assignment.id]
         ]
         category = prior_categories[-1] if prior_categories else categorisations[0]
         metrics[MetricName.ASSIGNMENT_WAIT] = _result(
