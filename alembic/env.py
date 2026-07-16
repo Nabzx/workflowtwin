@@ -10,6 +10,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from workflowtwin.core.config import get_settings
 from workflowtwin.infrastructure.database import Base
+from workflowtwin.infrastructure.persistence import models as persistence_models
+
+assert persistence_models
 
 config = context.config
 
