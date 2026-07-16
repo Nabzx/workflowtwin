@@ -88,6 +88,18 @@ def _unavailable(name: MetricName, unit: str, reason: str) -> MetricResult:
     )
 
 
+def _invalid(name: MetricName, unit: str, reason: str, *events: ReferralEvent) -> MetricResult:
+    return _result(
+        name,
+        None,
+        unit,
+        MetricStatus.INVALID_INPUT,
+        MetricPrecision.UNAVAILABLE,
+        events=events,
+        exclusion=reason,
+    )
+
+
 def _unique_events(events: list[ReferralEvent]) -> tuple[ReferralEvent, ...]:
     seen_ids = set()
     unique = []
@@ -116,6 +128,21 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
         )
         metrics[MetricName.CYCLE_TIME] = _unavailable(
             MetricName.CYCLE_TIME, "hours", "missing referral_received event"
+        )
+    elif terminal is not None and terminal.event_at < received.event_at:
+        metrics[MetricName.CASE_DURATION] = _invalid(
+            MetricName.CASE_DURATION,
+            "hours",
+            "terminal event precedes referral_received",
+            received,
+            terminal,
+        )
+        metrics[MetricName.CYCLE_TIME] = _invalid(
+            MetricName.CYCLE_TIME,
+            "hours",
+            "terminal event precedes referral_received",
+            received,
+            terminal,
         )
     elif terminal is not None:
         duration = _hours(received, terminal)
@@ -346,7 +373,15 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
                 assumptions=("pass is inferred from events before first categorisation",),
             )
 
-    if received and first_check:
+    if received and first_check and first_check.event_at < received.event_at:
+        metrics[MetricName.TIME_TO_FIRST_CHECK] = _invalid(
+            MetricName.TIME_TO_FIRST_CHECK,
+            "hours",
+            "completeness check precedes referral_received",
+            received,
+            first_check,
+        )
+    elif received and first_check:
         metrics[MetricName.TIME_TO_FIRST_CHECK] = _result(
             MetricName.TIME_TO_FIRST_CHECK,
             _hours(received, first_check),
@@ -364,7 +399,15 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
             "missing referral_received or completeness check",
         )
     first_booking = next(iter(by_type.get(EventType.APPOINTMENT_BOOKED, [])), None)
-    if received and first_booking:
+    if received and first_booking and first_booking.event_at < received.event_at:
+        metrics[MetricName.TIME_TO_BOOKING] = _invalid(
+            MetricName.TIME_TO_BOOKING,
+            "hours",
+            "appointment booking precedes referral_received",
+            received,
+            first_booking,
+        )
+    elif received and first_booking:
         metrics[MetricName.TIME_TO_BOOKING] = _result(
             MetricName.TIME_TO_BOOKING,
             _hours(received, first_booking),
@@ -392,7 +435,7 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
 
     calendar = AnalysisCalendar(config)
     waiting_intervals: list[tuple[ReferralEvent, ReferralEvent | None]] = []
-    if received and first_check:
+    if received and first_check and event_position[received.id] < event_position[first_check.id]:
         waiting_intervals.append((received, first_check))
     responses = list(by_type.get(EventType.MISSING_INFORMATION_RECEIVED, []))
     used_response_ids = set()
@@ -491,17 +534,26 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
             for event in categorisations
             if event_position[event.id] < event_position[first_assignment.id]
         ]
-        category = prior_categories[-1] if prior_categories else categorisations[0]
-        metrics[MetricName.ASSIGNMENT_WAIT] = _result(
-            MetricName.ASSIGNMENT_WAIT,
-            calendar.business_hours_between(category.event_at, first_assignment.event_at),
-            "business_hours",
-            MetricStatus.ESTIMATED,
-            MetricPrecision.ESTIMATED,
-            events=(category, first_assignment),
-            start=category,
-            end=first_assignment,
-        )
+        if prior_categories:
+            category = prior_categories[-1]
+            metrics[MetricName.ASSIGNMENT_WAIT] = _result(
+                MetricName.ASSIGNMENT_WAIT,
+                calendar.business_hours_between(category.event_at, first_assignment.event_at),
+                "business_hours",
+                MetricStatus.ESTIMATED,
+                MetricPrecision.ESTIMATED,
+                events=(category, first_assignment),
+                start=category,
+                end=first_assignment,
+            )
+        else:
+            metrics[MetricName.ASSIGNMENT_WAIT] = _invalid(
+                MetricName.ASSIGNMENT_WAIT,
+                "business_hours",
+                "team assignment precedes every categorisation event",
+                first_assignment,
+                *categorisations,
+            )
     else:
         metrics[MetricName.ASSIGNMENT_WAIT] = _unavailable(
             MetricName.ASSIGNMENT_WAIT,

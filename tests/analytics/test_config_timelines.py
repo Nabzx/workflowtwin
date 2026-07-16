@@ -13,6 +13,7 @@ from workflowtwin.analytics.config import AnalysisConfig, DuplicatePolicy
 from workflowtwin.analytics.fingerprint import dataset_fingerprint
 from workflowtwin.analytics.models import AnalysisInput, MetricName, MetricStatus
 from workflowtwin.analytics.timelines import build_timelines
+from workflowtwin.domain.referrals.enums import EventType
 from workflowtwin.domain.referrals.fixtures import (
     referral_with_duplicate_source_event,
     straight_through_successful_referral,
@@ -137,3 +138,27 @@ def test_configured_and_supplied_fingerprint_mismatches_are_rejected() -> None:
         BaselineAnalyzer(AnalysisConfig(source_dataset_fingerprint="1" * 64)).analyze(
             AnalysisInput((scenario.case,), scenario.events, actual)
         )
+
+
+def test_reversed_boundaries_are_invalid_instead_of_negative_or_crashing() -> None:
+    scenario = straight_through_successful_referral()
+    events = tuple(
+        event.model_copy(
+            update={
+                "event_at": scenario.case.received_at - (event.event_at - scenario.case.received_at)
+            }
+        )
+        if event.event_type
+        in {EventType.COMPLETENESS_CHECK_COMPLETED, EventType.APPOINTMENT_BOOKED}
+        else event
+        for event in scenario.events
+    )
+    config = AnalysisConfig()
+
+    metrics = calculate_case_metrics(
+        build_timelines((scenario.case,), events, config).timelines[0], config
+    ).metrics
+
+    assert metrics[MetricName.TIME_TO_FIRST_CHECK].status is MetricStatus.INVALID_INPUT
+    assert metrics[MetricName.TIME_TO_BOOKING].status is MetricStatus.INVALID_INPUT
+    assert metrics[MetricName.TIME_TO_FIRST_CHECK].value is None
