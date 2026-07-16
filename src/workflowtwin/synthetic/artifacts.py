@@ -70,3 +70,13 @@ def load_dataset(path: Path) -> GeneratedDataset:
         ground_truth=GenerationGroundTruth.model_validate(payload["ground_truth"]),
         manifest=GenerationManifest.model_validate(payload["manifest"]),
     )
+
+
+def load_manifest(path: Path) -> GenerationManifest:
+    """Load and validate a standalone generation manifest."""
+    return GenerationManifest.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def load_ground_truth(path: Path) -> GenerationGroundTruth:
+    """Load and validate a standalone synthetic benchmark label file."""
+    return GenerationGroundTruth.model_validate_json(path.read_text(encoding="utf-8"))
