@@ -16,3 +16,5 @@ artifacts/generation/*
 !artifacts/generation/.gitkeep
 artifacts/analysis/*
 !artifacts/analysis/.gitkeep
+artifacts/process/*
+!artifacts/process/.gitkeep
