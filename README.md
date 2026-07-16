@@ -45,7 +45,7 @@ It will:
 - simulate the recommendation's expected operational effect; and
 - compare baseline and simulated metrics without presenting synthetic results as clinical evidence.
 
-The current release includes the API foundation, the first versioned referral event model, and a seeded synthetic operational-data generator. It contains no process mining, bottleneck-detection engine, LLM calls, workflow automation, dashboard, authentication, or external integration.
+The current release includes the API foundation, versioned referral events, seeded synthetic data, and a deterministic baseline-analysis engine. It contains no process mining, LLM calls, workflow automation, simulation, dashboard, authentication, or external integration.
 
 ## Architecture
 
@@ -66,6 +66,7 @@ Client / future React app
 ```
 
 - `src/workflowtwin/api`: HTTP routes and transport schemas.
+- `src/workflowtwin/analytics`: timelines, metrics, cohorts, quality, findings, benchmark evaluation, and reports.
 - `src/workflowtwin/core`: runtime configuration and cross-cutting concerns.
 - `src/workflowtwin/domain`: workflow concepts and invariants, added as the MVP requires them.
 - `src/workflowtwin/services`: use-case orchestration, independent of HTTP.
@@ -143,7 +144,42 @@ Replaying a completed run with the same fingerprint returns `already_completed`;
 
 Presets are `tiny` (30 cases), `demo` (1,000), and `full` (10,000). Generated files under `artifacts/generation/` are ignored and should not be committed. See the [generator architecture](docs/architecture/synthetic-data-generation.md) and [ADR 0003](docs/decisions/0003-deterministic-synthetic-generation.md).
 
-## Planned metrics
+## Baseline analysis
+
+The analyzer builds immutable case timelines ordered by `(event_at, event_id)`, deduplicates source identities, and calculates metrics from event semantics. Case results retain units, exact/estimated/partial status, source event IDs, assumptions, warnings, and exclusion reasons. Cohorts cover referral source, service line, source system, assigned team when structured metadata is present, and terminal outcome.
+
+Supported measures include closed-case duration and cycle time, partial open-case age, business-hours waiting, a labelled manual-touch processing proxy, touches, internal handoffs, rework, first-pass completeness, completeness-check and booking times, assignment wait, scheduling failures, reassignments, stuck status, and ingestion quality. Missing boundaries remain unavailable or not applicable rather than becoming zero.
+
+Analyze an exported bundle and optionally evaluate findings against separate synthetic labels:
+
+```bash
+uv run workflowtwin analyze \
+  --dataset artifacts/generation/demo-dataset.json \
+  --manifest artifacts/generation/northstar-demo-42-manifest.json \
+  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json \
+  --report-output artifacts/analysis/demo-report.md \
+  --analysis-output artifacts/analysis/demo-analysis.json \
+  --case-metrics-output artifacts/analysis/demo-cases.jsonl
+```
+
+Analyze the same completed generation run from PostgreSQL:
+
+```bash
+uv run workflowtwin analyze \
+  --from-database \
+  --generation-run northstar-demo-42 \
+  --report-output artifacts/analysis/northstar-demo-42.md \
+  --analysis-output artifacts/analysis/northstar-demo-42.json
+```
+
+The primary JSON contains configuration, overall and cohort metrics, quality coverage, findings, optional benchmark evaluation, and a SHA-256 fingerprint that excludes wall-clock time and synthetic labels. Markdown is a concise stakeholder view; optional JSONL holds case results. Existing files are protected unless `--force` is supplied.
+
+Finding rules report only cohorts meeting the configured minimum size and use explicit absolute or relative materiality thresholds. They surface descriptive differences such as lower completeness or longer waits; they do not claim statistical significance and are not AI-generated recommendations. With the fixed demo seed, all four planted patterns are detected, with GP rework also appearing as an expected overlapping effect.
+
+See the [analysis architecture](docs/architecture/operational-metrics-analysis.md), [metric definitions](docs/architecture/metric-definitions.md), and [ADR 0004](docs/decisions/0004-operational-metrics.md).
+Local tiny, demo, and 10,000-case measurements are recorded in the [baseline benchmark](docs/architecture/baseline-analysis-benchmark.md).
+
+## Metrics roadmap
 
 Operational metrics will be defined with explicit timestamps, populations, and units:
 
@@ -162,7 +198,7 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 1. **Foundation (completed):** API skeleton, settings, structured logging, testing, PostgreSQL containers, migration tooling, documentation, and quality gates.
 2. **Referral event model (completed):** versioned contracts, explicit vocabulary, UTC timestamps, append-only PostgreSQL persistence, first migration, metric semantics, and ten deterministic fixtures.
 3. **Synthetic dataset (completed):** seeded configuration, business-time generation, planted bottlenecks, controlled defects, separate ground truth, manifests, validation, CLI presets, and idempotent batch persistence.
-4. **Operational metrics and baseline analysis:** implement the documented deterministic metrics, produce case and cohort summaries, and establish a reproducible baseline before process mining.
+4. **Operational metrics and baseline analysis (completed):** deterministic timelines and metrics, cohort summaries, quality coverage, material findings, synthetic benchmark evaluation, reproducible reports, and file/database CLI analysis.
 5. **Process intelligence:** reconstruct variants with PM4Py where useful, detect the leading bottleneck, and expose evidence through the API.
 6. **Recommendation and simulation:** add a deterministic first recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
 7. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
@@ -200,7 +236,7 @@ The API is available at `http://localhost:8000`, with interactive documentation 
 Run the quality gates:
 
 ```bash
-pytest
+pytest --cov
 ruff check .
 ruff format --check .
 mypy src tests alembic

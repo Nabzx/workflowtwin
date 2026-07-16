@@ -43,7 +43,8 @@ Repeated activities with different source identities remain in the timeline as l
 - Waiting time is an estimated sum of non-overlapping business-calendar intervals: received to first
   completeness check, missing-information request to its matching response, latest assignment or
   reassignment to the next scheduling start, and scheduling failure to the next scheduling start.
-- An unmatched wait in an open case may extend to the configured cutoff and is marked partial. An
+- Overlapping classified waits are merged before summation. An unmatched wait in an open case may
+  extend to the configured cutoff and is marked partial. An
   unmatched terminal-case wait is omitted with a warning.
 - Processing time is a configurable manual-touch proxy (`manual touches * minutes per touch`). Point
   events do not contain observed effort duration, so this value is always estimated.
@@ -51,6 +52,8 @@ Repeated activities with different source identities remain in the timeline as l
   closed-case duration summaries.
 - Assignment waiting is estimated business time from the latest categorisation/recategorisation to
   the first team assignment.
+- Stuck status compares the cutoff with the last qualifying progress event. Scheduling failures and
+  patient non-response do not reset that clock; explicit administrative progression does.
 
 Missing boundaries produce unavailable or not-applicable results, never a zero. Zero is valid only
 when the metric is observable and no qualifying event occurred, such as zero rework.
@@ -94,4 +97,3 @@ and quality summary. Wall-clock analysis time and synthetic evaluation are exclu
 File and database loaders both return the same typed cases, events, manifest context, and deterministic
 ordering. The current in-memory implementation is intended for the 10,000-case benchmark, not
 distributed or streaming analysis.
-
