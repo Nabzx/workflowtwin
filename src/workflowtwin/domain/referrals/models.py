@@ -8,6 +8,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    JsonValue,
     StringConstraints,
     field_validator,
     model_validator,
@@ -140,7 +141,7 @@ class ReferralEvent(DomainModel):
     channel: CommunicationChannel
     requires_manual_work: bool
     reason_code: ReasonCode | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, JsonValue] = Field(default_factory=dict)
     schema_version: SchemaVersion = 1
 
     @field_validator("event_at", "ingested_at")
@@ -151,7 +152,7 @@ class ReferralEvent(DomainModel):
 
     @field_validator("metadata")
     @classmethod
-    def validate_metadata(cls, value: dict[str, Any]) -> dict[str, Any]:
+    def validate_metadata(cls, value: dict[str, JsonValue]) -> dict[str, JsonValue]:
         """Reject metadata fields outside the administrative safety boundary."""
         if forbidden_key := _find_forbidden_metadata_key(value):
             raise ValueError(f"metadata key '{forbidden_key}' is not permitted")

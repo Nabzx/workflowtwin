@@ -155,6 +155,11 @@ def test_metadata_rejects_direct_patient_and_clinical_fields(metadata: dict[str,
         ReferralEvent.model_validate(event_data(metadata=metadata))
 
 
+def test_metadata_requires_json_compatible_values() -> None:
+    with pytest.raises(ValidationError):
+        ReferralEvent.model_validate(event_data(metadata={"not_json": NOW}))
+
+
 def test_event_contract_is_frozen() -> None:
     event = ReferralEvent.model_validate(event_data())
 
