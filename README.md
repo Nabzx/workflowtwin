@@ -45,7 +45,7 @@ It will:
 - simulate the recommendation's expected operational effect; and
 - compare baseline and simulated metrics without presenting synthetic results as clinical evidence.
 
-This foundation release deliberately includes only the API shell, configuration, logging, tests, database tooling, containers, and architecture documentation. It contains no synthetic data generation, process mining, LLM calls, workflow automation, dashboard, authentication, or external integration.
+The current release includes the API foundation and the first versioned referral case and event data model. It contains no large synthetic dataset generator, process mining, LLM calls, workflow automation, dashboard, authentication, or external integration.
 
 ## Architecture
 
@@ -74,6 +74,23 @@ Client / future React app
 
 The API uses Pydantic settings, structured JSON logging outside local development, SQLAlchemy and Alembic for planned persistence, and dependency inversion at real provider boundaries. PM4Py and an LLM provider abstraction will be introduced only when their first use cases are implemented. See the [technical architecture](docs/architecture/technical-architecture.md) and [initial ADR](docs/decisions/0001-initial-technology-choices.md).
 
+## Referral data foundation
+
+The version 1 operational model is intentionally small and excludes direct patient identifiers, diagnoses, clinical narrative, treatment decisions, risk scores, and clinical prioritisation.
+
+### Current entities
+
+- `referral_cases` stores one current, queryable projection for each process instance: stable internal and external identities, referral source, service line, lifecycle status, receipt and closure times, synthetic marker, schema version, and audit timestamps.
+- `referral_events` stores immutable recorded facts: case and source identities, event and ingestion times, operational activity, actor, source system, channel, manual-work flag, structured reason, bounded metadata, and schema version.
+
+`event_at` is the source system's claim about when an activity happened. `ingested_at` is when WorkflowTwin accepted the fact. Keeping both allows later analysis to reconstruct event-time flow while retaining delayed and out-of-order arrivals and reproducing what was known at an ingestion watermark.
+
+Events are append-only in ordinary operation. Frozen domain contracts, SQLAlchemy mutation hooks, a PostgreSQL update/delete trigger, and `ON DELETE RESTRICT` protect audit history. `(source_system, external_event_id)` detects duplicate source facts. These controls are practical safeguards rather than cryptographic tamper evidence or protection from a database owner.
+
+Ten deterministic, fictional fixtures cover straight-through completion, one and repeated information loops, recategorisation and reassignment, scheduling failures, cancellation, rejection, inactivity, duplicate source identity, and delayed ingestion. They are compact evaluation cases for the next analytical stages, not the full synthetic dataset generator.
+
+See the [Northstar workflow](docs/architecture/northstar-referral-workflow.md), [metric definitions](docs/architecture/metric-definitions.md), and [event-model decision](docs/decisions/0002-event-data-model.md).
+
 ## Planned metrics
 
 Operational metrics will be defined with explicit timestamps, populations, and units:
@@ -90,13 +107,14 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 
 ## Roadmap
 
-1. **Foundation (current):** API skeleton, settings, structured logging, testing, PostgreSQL containers, migrations, documentation, and quality gates.
-2. **Synthetic event model:** define referral cases and event contracts, create a reproducible scenario generator, persist events, and document data assumptions.
-3. **Process intelligence:** reconstruct variants with PM4Py where useful, implement metric definitions, detect the leading bottleneck, and expose evidence through the API.
-4. **Recommendation and simulation:** add a deterministic first recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
-5. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
-6. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
-7. **Evaluation and observability:** instrument traces and model/provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact.
+1. **Foundation (completed):** API skeleton, settings, structured logging, testing, PostgreSQL containers, migration tooling, documentation, and quality gates.
+2. **Referral event model (completed):** versioned contracts, explicit vocabulary, UTC timestamps, append-only PostgreSQL persistence, first migration, metric semantics, and ten deterministic fixtures.
+3. **Synthetic dataset:** create a seeded, configurable generator from the validated contracts, persist batches idempotently, and report generation assumptions and data quality.
+4. **Process intelligence:** reconstruct variants with PM4Py where useful, implement metric definitions, detect the leading bottleneck, and expose evidence through the API.
+5. **Recommendation and simulation:** add a deterministic first recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
+6. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
+7. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
+8. **Evaluation and observability:** instrument traces and model/provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact.
 
 ## Repository layout
 
@@ -132,7 +150,7 @@ Run the quality gates:
 pytest
 ruff check .
 ruff format --check .
-mypy src tests
+mypy src tests alembic
 ```
 
 Or run the local stack:
@@ -141,7 +159,21 @@ Or run the local stack:
 docker compose up --build
 ```
 
-PostgreSQL is reachable from the host on port `5432`; the API waits for its health check and starts on port `8000`. Development credentials in Compose are local defaults and must not be used in deployed environments.
+PostgreSQL is reachable from the host on `POSTGRES_PORT` (default `5432`); the API waits for its health check and starts on port `8000`. Development credentials in Compose are local defaults and must not be used in deployed environments.
+
+Apply or inspect database migrations:
+
+```bash
+uv run alembic upgrade head
+uv run alembic current
+```
+
+PostgreSQL integration tests are opt-in so the normal unit suite remains self-contained. Point them at an isolated, migrated database:
+
+```bash
+WORKFLOWTWIN_TEST_DATABASE_URL=postgresql+asyncpg://workflowtwin:workflowtwin@localhost:5432/workflowtwin \
+  uv run pytest -m postgres
+```
 
 ## API foundation
 
@@ -155,4 +187,3 @@ The health endpoint is intentionally a liveness check in this release. Database 
 ## Safety and evidence
 
 WorkflowTwin analyses administrative workflow performance. Future automation recommendations must be explainable, auditable, reversible where practical, and subject to human approval when risk requires it. Patient-facing or clinical decisions are not delegated to this system. No result derived from fictional or synthetic Northstar Clinics data should be represented as evidence about a real provider or real clinical outcomes.
-
