@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Self
 from uuid import UUID
 
 from sqlalchemy import (
@@ -32,6 +32,7 @@ from workflowtwin.domain.referrals.enums import (
     ServiceLine,
     SourceSystem,
 )
+from workflowtwin.domain.referrals.models import ReferralCase, ReferralEvent
 from workflowtwin.infrastructure.database import Base
 
 
@@ -106,6 +107,23 @@ class ReferralCaseRecord(Base):
         passive_deletes=True,
     )
 
+    @classmethod
+    def from_domain(cls, referral_case: ReferralCase) -> Self:
+        """Create a persistence record from a validated domain snapshot."""
+        return cls(
+            id=referral_case.id,
+            external_source_id=referral_case.external_source_id,
+            referral_source=referral_case.referral_source,
+            service_line=referral_case.service_line,
+            status=referral_case.status,
+            received_at=referral_case.received_at,
+            closed_at=referral_case.closed_at,
+            is_synthetic=referral_case.is_synthetic,
+            schema_version=referral_case.schema_version,
+            created_at=referral_case.created_at,
+            updated_at=referral_case.updated_at,
+        )
+
 
 class ReferralEventRecord(Base):
     """Append-only recorded fact in a referral lifecycle."""
@@ -162,6 +180,26 @@ class ReferralEventRecord(Base):
     schema_version: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
 
     referral_case: Mapped[ReferralCaseRecord] = relationship(back_populates="events")
+
+    @classmethod
+    def from_domain(cls, referral_event: ReferralEvent) -> Self:
+        """Create a persistence record from a validated append-only fact."""
+        return cls(
+            id=referral_event.id,
+            referral_case_id=referral_event.referral_case_id,
+            external_event_id=referral_event.external_event_id,
+            event_type=referral_event.event_type,
+            event_at=referral_event.event_at,
+            ingested_at=referral_event.ingested_at,
+            actor_type=referral_event.actor_type,
+            actor_identifier=referral_event.actor_identifier,
+            source_system=referral_event.source_system,
+            channel=referral_event.channel,
+            requires_manual_work=referral_event.requires_manual_work,
+            reason_code=referral_event.reason_code,
+            event_metadata=referral_event.metadata,
+            schema_version=referral_event.schema_version,
+        )
 
 
 class ImmutableEventError(RuntimeError):

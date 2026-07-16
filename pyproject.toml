@@ -15,7 +15,7 @@ dependencies = [
     "asyncpg>=0.30,<1",
     "fastapi>=0.115,<1",
     "pydantic-settings>=2.7,<3",
-    "sqlalchemy>=2.0,<3",
+    "sqlalchemy[asyncio]>=2.0,<3",
     "structlog>=24.4,<26",
     "uvicorn[standard]>=0.34,<1",
 ]
@@ -35,6 +35,7 @@ packages = ["src/workflowtwin"]
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers -ra"
 testpaths = ["tests"]
+markers = ["postgres: requires a local PostgreSQL test database"]
 
 [tool.ruff]
 target-version = "py312"
@@ -70,4 +71,3 @@ source = ["workflowtwin"]
 show_missing = true
 skip_covered = true
 fail_under = 90
-
