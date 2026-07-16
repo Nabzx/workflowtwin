@@ -1,6 +1,7 @@
 """Case-level operational metrics calculated from canonical event semantics."""
 
 from collections import Counter
+from datetime import datetime
 from itertools import pairwise
 
 from workflowtwin.analytics.calendar import AnalysisCalendar
@@ -26,6 +27,20 @@ INTERNAL_ACTORS = {
     ActorType.ADMIN_STAFF,
     ActorType.CLINICAL_TEAM,
     ActorType.SCHEDULING_STAFF,
+}
+PROGRESS_EVENT_TYPES = {
+    EventType.REFERRAL_RECEIVED,
+    EventType.COMPLETENESS_CHECK_COMPLETED,
+    EventType.MISSING_INFORMATION_REQUESTED,
+    EventType.MISSING_INFORMATION_RECEIVED,
+    EventType.REFERRAL_CATEGORISED,
+    EventType.REFERRAL_RECATEGORISED,
+    EventType.CLINICAL_TEAM_ASSIGNED,
+    EventType.CLINICAL_TEAM_REASSIGNED,
+    EventType.APPOINTMENT_SCHEDULING_STARTED,
+    EventType.APPOINTMENT_BOOKED,
+    EventType.PATIENT_NOTIFIED,
+    *TERMINAL_EVENT_TYPES,
 }
 
 
@@ -262,7 +277,10 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
         MetricPrecision.EXACT,
         events=tuple(by_type.get(EventType.CLINICAL_TEAM_REASSIGNED, [])),
     )
-    last_event = events[-1] if events else None
+    last_progress_event = next(
+        (event for event in reversed(events) if event.event_type in PROGRESS_EVENT_TYPES),
+        None,
+    )
     if terminal is not None:
         metrics[MetricName.IS_STUCK] = _result(
             MetricName.IS_STUCK,
@@ -272,15 +290,17 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
             MetricPrecision.EXACT,
             events=(terminal,),
         )
-    elif last_event is not None and config.analysis_cutoff >= last_event.event_at:
-        inactive_hours = (config.analysis_cutoff - last_event.event_at).total_seconds() / 3600
+    elif last_progress_event is not None and config.analysis_cutoff >= last_progress_event.event_at:
+        inactive_hours = (
+            config.analysis_cutoff - last_progress_event.event_at
+        ).total_seconds() / 3600
         metrics[MetricName.IS_STUCK] = _result(
             MetricName.IS_STUCK,
             inactive_hours >= config.stuck_threshold_hours,
             "boolean",
             MetricStatus.CALCULATED,
             MetricPrecision.EXACT,
-            events=(last_event,),
+            events=(last_progress_event,),
             assumptions=(
                 f"open case is stuck after {config.stuck_threshold_hours:g} inactive hours",
             ),
@@ -403,24 +423,34 @@ def calculate_case_metrics(timeline: CaseTimeline, config: AnalysisConfig) -> Ca
         )
         waiting_intervals.append((failure, next_start))
 
-    waiting_hours = 0.0
+    resolved_intervals: list[tuple[datetime, datetime]] = []
     waiting_sources: list[ReferralEvent] = []
     unmatched = 0
     partial = False
     for start, end in waiting_intervals:
         if end is not None:
-            waiting_hours += calendar.business_hours_between(start.event_at, end.event_at)
+            resolved_intervals.append((start.event_at, end.event_at))
             waiting_sources.extend((start, end))
         elif (
             terminal is None
             and config.include_open_cases
             and config.analysis_cutoff >= start.event_at
         ):
-            waiting_hours += calendar.business_hours_between(start.event_at, config.analysis_cutoff)
+            resolved_intervals.append((start.event_at, config.analysis_cutoff))
             waiting_sources.append(start)
             partial = True
         else:
             unmatched += 1
+    merged_intervals: list[tuple[datetime, datetime]] = []
+    for start_at, end_at in sorted(resolved_intervals):
+        if merged_intervals and start_at <= merged_intervals[-1][1]:
+            previous_start, previous_end = merged_intervals[-1]
+            merged_intervals[-1] = (previous_start, max(previous_end, end_at))
+        else:
+            merged_intervals.append((start_at, end_at))
+    waiting_hours = sum(
+        calendar.business_hours_between(start_at, end_at) for start_at, end_at in merged_intervals
+    )
     waiting_status = MetricStatus.PARTIAL if partial else MetricStatus.ESTIMATED
     metrics[MetricName.WAITING_TIME] = _result(
         MetricName.WAITING_TIME,
