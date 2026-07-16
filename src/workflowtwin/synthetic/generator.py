@@ -53,6 +53,7 @@ class _CaseBuilder:
         source_system: SourceSystem,
     ) -> None:
         self.run_id = run_id
+        self.run_token = hashlib.sha256(run_id.encode()).hexdigest()[:8].upper()
         self.case_index = case_index
         self.case_id = case_id
         self.source_system = source_system
@@ -78,7 +79,7 @@ class _CaseBuilder:
         event = ReferralEvent(
             id=event_id,
             referral_case_id=self.case_id,
-            external_event_id=f"NSTAR:{self.case_index:06}:{event_index:03}",
+            external_event_id=(f"NSTAR:{self.run_token}:{self.case_index:06}:{event_index:03}"),
             event_type=event_type,
             event_at=event_at,
             ingested_at=event_at + timedelta(minutes=ingestion_delay_minutes),
@@ -553,7 +554,9 @@ class SyntheticReferralGenerator:
         )
         case = ReferralCase(
             id=case_id,
-            external_source_id=f"NSC-REF-{case_index:08}",
+            external_source_id=(
+                f"NSC-REF-{hashlib.sha256(run_id.encode()).hexdigest()[:8].upper()}{case_index:08}"
+            ),
             referral_source=referral_source,
             service_line=service_line,
             status=terminal_status,

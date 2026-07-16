@@ -73,7 +73,12 @@ async def test_migration_created_expected_schema(postgres_engine: AsyncEngine) -
     async with postgres_engine.connect() as connection:
         details = await connection.run_sync(_schema_details)
 
-    assert {"alembic_version", "referral_cases", "referral_events"} <= details["tables"]
+    assert {
+        "alembic_version",
+        "referral_cases",
+        "referral_events",
+        "synthetic_generation_runs",
+    } <= details["tables"]
     assert {"ix_referral_cases_status", "ix_referral_cases_received_at"} <= details["case_indexes"]
     assert {"ix_referral_events_case_event_at", "ix_referral_events_event_type"} <= details[
         "event_indexes"
