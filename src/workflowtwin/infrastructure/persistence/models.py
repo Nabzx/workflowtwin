@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Self
+from typing import Any, Literal, Self, cast
 from uuid import UUID
 
 from sqlalchemy import (
@@ -124,6 +124,22 @@ class ReferralCaseRecord(Base):
             updated_at=referral_case.updated_at,
         )
 
+    def to_domain(self) -> ReferralCase:
+        """Revalidate a stored projection at the analytics boundary."""
+        return ReferralCase(
+            id=self.id,
+            external_source_id=self.external_source_id,
+            referral_source=self.referral_source,
+            service_line=self.service_line,
+            status=self.status,
+            received_at=self.received_at,
+            closed_at=self.closed_at,
+            is_synthetic=self.is_synthetic,
+            schema_version=cast(Literal[1], self.schema_version),
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
 
 class ReferralEventRecord(Base):
     """Append-only recorded fact in a referral lifecycle."""
@@ -199,6 +215,25 @@ class ReferralEventRecord(Base):
             reason_code=referral_event.reason_code,
             event_metadata=referral_event.metadata,
             schema_version=referral_event.schema_version,
+        )
+
+    def to_domain(self) -> ReferralEvent:
+        """Revalidate a stored append-only event at the analytics boundary."""
+        return ReferralEvent(
+            id=self.id,
+            referral_case_id=self.referral_case_id,
+            external_event_id=self.external_event_id,
+            event_type=self.event_type,
+            event_at=self.event_at,
+            ingested_at=self.ingested_at,
+            actor_type=self.actor_type,
+            actor_identifier=self.actor_identifier,
+            source_system=self.source_system,
+            channel=self.channel,
+            requires_manual_work=self.requires_manual_work,
+            reason_code=self.reason_code,
+            metadata=self.event_metadata,
+            schema_version=cast(Literal[1], self.schema_version),
         )
 
 
