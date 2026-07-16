@@ -15,11 +15,14 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from workflowtwin.analytics.analyzer import BaselineAnalyzer
+from workflowtwin.analytics.config import AnalysisConfig
 from workflowtwin.infrastructure.persistence.generation_runs import (
     GenerationRunStatus,
     SyntheticGenerationRunRecord,
 )
 from workflowtwin.infrastructure.persistence.models import ReferralCaseRecord, ReferralEventRecord
+from workflowtwin.services.baseline_analysis import input_from_database, input_from_dataset
 from workflowtwin.services.synthetic_generation import (
     GenerationPersistenceError,
     PersistenceStatus,
@@ -138,3 +141,20 @@ async def test_failed_batch_rolls_back_data_and_marks_run_failed(
     assert run is not None
     assert run.status == GenerationRunStatus.FAILED.value
     assert "IntegrityError" in (run.failure_summary or "")
+
+
+async def test_file_and_database_analysis_have_same_logical_fingerprint(
+    generation_sessions: async_sessionmaker[AsyncSession],
+) -> None:
+    dataset = _dataset("integration-analysis", case_count=20)
+    await SyntheticGenerationService(generation_sessions, batch_size=5).persist(dataset)
+    config = AnalysisConfig(minimum_cohort_size=2)
+
+    file_bundle = BaselineAnalyzer(config).analyze(input_from_dataset(dataset))
+    database_input = await input_from_database(generation_sessions, "integration-analysis")
+    database_bundle = BaselineAnalyzer(config).analyze(database_input)
+
+    assert database_bundle.baseline.analysis_fingerprint == (
+        file_bundle.baseline.analysis_fingerprint
+    )
+    assert database_bundle.case_metrics == file_bundle.case_metrics
