@@ -71,6 +71,7 @@ class _CaseBuilder:
         manual: bool = False,
         reason_code: ReasonCode | None = None,
         ingestion_delay_minutes: float = 5,
+        metadata: dict[str, str] | None = None,
     ) -> ReferralEvent:
         event_index = len(self.events) + 1
         event_id = uuid5(
@@ -89,7 +90,7 @@ class _CaseBuilder:
             channel=channel,
             requires_manual_work=manual,
             reason_code=reason_code,
-            metadata={"generation_run_id": self.run_id},
+            metadata={"generation_run_id": self.run_id, **(metadata or {})},
             schema_version=1,
         )
         self.events.append(event)
@@ -376,6 +377,7 @@ class SyntheticReferralGenerator:
                     source_system=SourceSystem.ADMIN_SYSTEM,
                     manual=True,
                     ingestion_delay_minutes=ingestion_delay(),
+                    metadata={"assigned_team_identifier": team},
                 )
 
                 reassignment_rate = deviations.team_reassignment
@@ -404,6 +406,7 @@ class SyntheticReferralGenerator:
                         manual=True,
                         reason_code=ReasonCode.CAPACITY_REBALANCE,
                         ingestion_delay_minutes=ingestion_delay(),
+                        metadata={"assigned_team_identifier": team},
                     )
                     path.append("reassigned")
                     has_rework = True
