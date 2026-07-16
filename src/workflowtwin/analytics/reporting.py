@@ -18,6 +18,15 @@ def _write_text(path: Path, content: str) -> None:
     temporary_path.replace(path)
 
 
+def _write_case_metrics(path: Path, bundle: AnalysisBundle) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_suffix(f"{path.suffix}.tmp")
+    with temporary_path.open("w", encoding="utf-8") as output:
+        for case in bundle.case_metrics:
+            output.write(json.dumps(case.model_dump(mode="json"), sort_keys=True) + "\n")
+    temporary_path.replace(path)
+
+
 def _json(value: Any) -> str:
     return json.dumps(value, indent=2, sort_keys=True) + "\n"
 
@@ -155,8 +164,4 @@ def write_analysis_artifacts(
     _write_text(analysis_output, _json(bundle.baseline.model_dump(mode="json")))
     _write_text(report_output, render_markdown(bundle))
     if case_metrics_output is not None:
-        content = "".join(
-            json.dumps(case.model_dump(mode="json"), sort_keys=True) + "\n"
-            for case in bundle.case_metrics
-        )
-        _write_text(case_metrics_output, content)
+        _write_case_metrics(case_metrics_output, bundle)

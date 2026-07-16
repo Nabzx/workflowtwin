@@ -43,15 +43,11 @@ def build_quality_report(
         )
         status_counts[metric_name.value] = dict(sorted(counts.items()))
     unsupported = sum(not timeline.supported_schema for timeline in timeline_result.timelines)
+    metrics_by_case = {case.case_id: case for case in case_metrics}
     ambiguous = sum(
         bool(timeline.excluded_duplicate_event_ids)
         or "multiple terminal events; first event-time terminal used"
-        in {
-            warning
-            for case in case_metrics
-            if case.case_id == timeline.referral_case.id
-            for warning in case.metrics[MetricName.CASE_DURATION].warnings
-        }
+        in metrics_by_case[timeline.referral_case.id].metrics[MetricName.CASE_DURATION].warnings
         for timeline in analysed_timelines
     )
     delayed = sum(
