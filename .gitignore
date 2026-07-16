@@ -12,4 +12,5 @@ coverage.xml
 htmlcov/
 dist/
 build/
-
+artifacts/generation/*
+!artifacts/generation/.gitkeep
