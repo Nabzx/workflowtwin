@@ -209,9 +209,7 @@ def _status(
     if fitness is None:
         return ConformanceStatus.UNAVAILABLE
     governed_nonconforming = any(
-        deviation.category
-        not in {DeviationCategory.SCHEDULING_RETRY}
-        for deviation in deviations
+        deviation.category not in {DeviationCategory.SCHEDULING_RETRY} for deviation in deviations
     )
     structurally_deviant = (
         bool(deviations) if reference_id == STRICT_REFERENCE_ID else governed_nonconforming

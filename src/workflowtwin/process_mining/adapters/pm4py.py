@@ -234,10 +234,20 @@ class Pm4pyAdapter:
             except Exception as error:
                 warnings.append(f"{name} visualisation unavailable: {type(error).__name__}")
 
+        filtered_frequency = {
+            edge: count
+            for edge, count in self._artifacts["frequency"].items()
+            if count >= config.visualisation_minimum_frequency
+        }
+        filtered_performance = {
+            edge: details
+            for edge, details in self._artifacts["performance"].items()
+            if edge in filtered_frequency
+        }
         render(
             "frequency-dfg",
             pm4py.save_vis_dfg,
-            self._artifacts["frequency"],
+            filtered_frequency,
             self._artifacts["starts"],
             self._artifacts["ends"],
             max_num_edges=config.visualisation_maximum_edges,
@@ -245,7 +255,7 @@ class Pm4pyAdapter:
         render(
             "performance-dfg",
             pm4py.save_vis_performance_dfg,
-            self._artifacts["performance"],
+            filtered_performance,
             self._artifacts["starts"],
             self._artifacts["ends"],
             aggregation_measure="median",

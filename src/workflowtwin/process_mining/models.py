@@ -388,6 +388,7 @@ class ProcessMiningAnalysis(ProcessModel):
     baseline_reconciliation: tuple[BaselineReconciliation, ...]
     ground_truth_evaluation: ProcessGroundTruthEvaluation
     graph_data: ProcessGraphData
+    visualisation_artifacts: tuple[str, ...]
     warnings: tuple[str, ...]
     assumptions: tuple[str, ...]
     process_analysis_fingerprint: str

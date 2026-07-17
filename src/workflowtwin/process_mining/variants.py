@@ -70,9 +70,7 @@ def build_variants(
     process_log: ProcessLog,
     case_metrics: tuple[CaseMetrics, ...],
     config: ProcessMiningConfig,
-    conformance_by_case: dict[
-        UUID, tuple[float | None, float | None, bool | None, bool | None]
-    ]
+    conformance_by_case: dict[UUID, tuple[float | None, float | None, bool | None, bool | None]]
     | None = None,
 ) -> tuple[ProcessVariant, ...]:
     metrics_by_case = {case.case_id: case for case in case_metrics}
