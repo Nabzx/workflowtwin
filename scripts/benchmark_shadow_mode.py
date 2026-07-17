@@ -77,6 +77,13 @@ def main() -> int:
             overwrite=args.force,
         )
         throughput = len(snapshots) / result.runtime_seconds if result.runtime_seconds else 0
+        output_paths = (
+            args.output_dir / f"{stem}-evaluation.json",
+            args.output_dir / f"{stem}-report.md",
+            args.output_dir / f"{stem}-visualisation.json",
+        )
+        output_bytes = sum(path.stat().st_size for path in output_paths)
+        checkpoint_bytes = len(result.run.checkpoint.model_dump_json().encode("utf-8"))
         print(
             f"{result.profile.value}: cases={evaluation.detector.incoming_cases}; "
             f"recommendations={evaluation.detector.recommendations}; "
@@ -86,6 +93,19 @@ def main() -> int:
             f"runtime={result.runtime_seconds:.3f}s; throughput={throughput:.1f} items/s; "
             f"assessment={evaluation.promotion_assessment.result}; "
             f"fingerprint={evaluation.evaluation_fingerprint}"
+        )
+        print(
+            f"  source_items={result.run.manifest.source_items_processed}; "
+            f"abstentions={evaluation.detector.abstentions}; "
+            f"tp/fp/fn={evaluation.detector.true_positives}/"
+            f"{evaluation.detector.false_positives}/{evaluation.detector.false_negatives}; "
+            f"reviews={evaluation.reviewer.review_count}; "
+            f"audit_records={evaluation.audit.total_records}; "
+            f"audit_completeness={evaluation.audit.audit_completeness_rate}; "
+            f"policy_violations={evaluation.policy.total_policy_violations}; "
+            f"p50/p95_latency={evaluation.source_to_recommendation_latency.median_minutes}/"
+            f"{evaluation.source_to_recommendation_latency.p95_minutes} logical minutes; "
+            f"checkpoint={checkpoint_bytes} bytes; outputs={output_bytes} bytes"
         )
     print(f"Snapshots={len(snapshots)}; approximate peak process memory={peak_memory_mib:.1f} MiB")
     return 0

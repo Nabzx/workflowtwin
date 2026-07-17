@@ -434,8 +434,12 @@ class ShadowModeRunner:
             "replay_ordering": self.config.availability_ordering,
             "source_items_processed": values["processed"],
             "cases_observed": len(values["states"]),
-            "eligible_cases": sum(
-                policy.status.value.startswith("permitted") for policy in policies
+            "eligible_cases": len(
+                {
+                    policy.case_id
+                    for policy in policies
+                    if policy.status.value.startswith("permitted")
+                }
             ),
             "detector_evaluations": len(results),
             "recommendations": sum(

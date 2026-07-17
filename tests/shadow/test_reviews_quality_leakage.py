@@ -73,6 +73,11 @@ def test_benchmark_reviews_and_metrics_use_correct_denominators(
     assert evaluation.policy.workflow_mutation_attempts == 0
     assert evaluation.source_to_recommendation_latency.p95_minutes == 0
     assert evaluation.evaluation_fingerprint
+    if any(
+        item.breached and item.action in {"pause_shadow_run", "stop_shadow_run"}
+        for item in evaluation.stop_conditions
+    ):
+        assert evaluation.promotion_assessment.result == "pause_due_to_stop_condition"
 
 
 def test_no_ground_truth_leaves_quality_metrics_unavailable(

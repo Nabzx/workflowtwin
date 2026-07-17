@@ -587,6 +587,9 @@ def _promotion(
         if detector.incoming_cases
         else 0.0
     )
+    recommendation_rate = (
+        detector.recommendations / detector.incoming_cases if detector.incoming_cases else 0.0
+    )
     checks = (
         (
             "safety-prohibited-actions",
@@ -630,6 +633,23 @@ def _promotion(
             True,
         ),
         (
+            "burden-recommendation-capacity",
+            "operational_burden",
+            recommendation_rate <= config.maximum_recommendation_rate,
+            recommendation_rate,
+            config.maximum_recommendation_rate,
+            True,
+        ),
+        (
+            "burden-reviewer-rejection",
+            "operational_burden",
+            reviewer.rejection_rate is not None
+            and reviewer.rejection_rate <= config.maximum_reviewer_rejection_rate,
+            reviewer.rejection_rate,
+            config.maximum_reviewer_rejection_rate,
+            True,
+        ),
+        (
             "review-completion",
             "operational_burden",
             reviewer.completion_rate is not None and reviewer.completion_rate >= 0.8,
@@ -665,9 +685,11 @@ def _promotion(
         )
         for identifier, category, passed, observed, threshold, mandatory in checks
     )
-    hard_stop = any(item.breached and item.action == "stop_shadow_run" for item in stops)
+    pause_or_stop = any(
+        item.breached and item.action in {"pause_shadow_run", "stop_shadow_run"} for item in stops
+    )
     mandatory_passed = all(item.status is GateStatus.PASSED for item in gates if item.mandatory)
-    if hard_stop:
+    if pause_or_stop:
         result = "pause_due_to_stop_condition"
     elif mandatory_passed:
         result = "ready_for_limited_human_in_the_loop_pilot"
