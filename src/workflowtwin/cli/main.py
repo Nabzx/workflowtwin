@@ -18,6 +18,10 @@ from workflowtwin.cli.identify_opportunities import (
     run_identify_opportunities,
 )
 from workflowtwin.cli.process_mine import configure_process_mine_parser, run_process_mine
+from workflowtwin.cli.simulate_intervention import (
+    configure_simulate_intervention_parser,
+    run_simulate_intervention,
+)
 from workflowtwin.core.config import get_settings
 from workflowtwin.opportunities.reporting import OpportunityArtifactExistsError
 from workflowtwin.process_mining.adapters.pm4py import Pm4pyAdapterError
@@ -27,6 +31,7 @@ from workflowtwin.services.synthetic_generation import (
     GenerationPersistenceError,
     SyntheticGenerationService,
 )
+from workflowtwin.simulation.reporting import SimulationArtifactExistsError
 from workflowtwin.synthetic.artifacts import (
     ArtifactExistsError,
     load_dataset,
@@ -82,6 +87,7 @@ def _parser() -> argparse.ArgumentParser:
     configure_analyze_parser(subparsers)
     configure_process_mine_parser(subparsers)
     configure_identify_opportunities_parser(subparsers)
+    configure_simulate_intervention_parser(subparsers)
     return parser
 
 
@@ -171,6 +177,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return run_process_mine(args)
         if args.command == "identify-opportunities":
             return run_identify_opportunities(args)
+        if args.command == "simulate-intervention":
+            return run_simulate_intervention(args)
         return _validate(args)
     except (
         AnalysisArtifactExistsError,
@@ -178,6 +186,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         Pm4pyAdapterError,
         ProcessArtifactExistsError,
         OpportunityArtifactExistsError,
+        SimulationArtifactExistsError,
         ArtifactExistsError,
         GenerationPersistenceError,
         OSError,
