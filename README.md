@@ -46,9 +46,10 @@ It will:
 - compare baseline and simulated metrics without presenting synthetic results as clinical evidence.
 
 The current release includes the API foundation, versioned referral events, seeded synthetic data,
-a deterministic baseline engine, and explainable PM4Py-backed process reconstruction and
-conformance. It contains no LLM calls, recommendations, workflow automation, simulation,
-dashboard, authentication, or external integration.
+a deterministic baseline engine, explainable PM4Py-backed process reconstruction, and an
+evidence-gated administrative opportunity portfolio. It contains no LLM calls, intervention
+recommendations, workflow automation, simulation, dashboard, authentication, or external
+integration.
 
 ## Architecture
 
@@ -71,6 +72,7 @@ Client / future React app
 - `src/workflowtwin/api`: HTTP routes and transport schemas.
 - `src/workflowtwin/analytics`: timelines, metrics, cohorts, quality, findings, benchmark evaluation, and reports.
 - `src/workflowtwin/process_mining`: event-log mapping, DFG and variant statistics, PM4Py adapter, reference conformance, process findings, graph data, and reports.
+- `src/workflowtwin/opportunities`: evidence linking, fictional research, archetypes, candidate rules, safety gates, scoring, portfolio construction, benchmark evaluation, and reports.
 - `src/workflowtwin/core`: runtime configuration and cross-cutting concerns.
 - `src/workflowtwin/domain`: workflow concepts and invariants, added as the MVP requires them.
 - `src/workflowtwin/services`: use-case orchestration, independent of HTTP.
@@ -82,7 +84,7 @@ Alembic for persistence, and dependency inversion at real provider boundaries. P
 behind a typed adapter; no LLM SDK or agent framework is present. See the
 [technical architecture](docs/architecture/technical-architecture.md),
 [process architecture](docs/architecture/process-reconstruction-and-conformance.md), and
-[process-mining ADR](docs/decisions/0005-process-mining.md).
+[opportunity architecture](docs/architecture/automation-opportunity-identification.md).
 
 ## Referral data foundation
 
@@ -231,6 +233,41 @@ variants. Strict/governed fully conforming rates are 36.3%/87.1%, and all four p
 detected after discovery. See the
 [process benchmark](docs/architecture/process-mining-benchmark.md) for demo and 10,000-case results.
 
+## Evidence-backed automation opportunities
+
+WorkflowTwin combines the baseline and process artifacts with a versioned, explicitly fictional
+research pack. It validates artifact lineage, creates stable evidence references, preserves
+contradictory user evidence, and applies six transparent administrative candidate rules. Seven
+archetypes define eligibility, oversight, success measures, known failure modes, and safety limits.
+
+Each candidate reports observed burden, eligibility, value, readiness, risk, confidence, evidence
+gaps, assumptions, controls, and future success metrics separately. Clinical judgement, treatment,
+clinical prioritisation, prohibited data use, and governance failures are hard exclusions outside the
+weighted priority score. Addressable burden is only an upper bound; expected benefit remains
+unavailable until a later intervention and counterfactual milestone.
+
+Run opportunity identification after producing compatible baseline and process artifacts:
+
+```bash
+uv run workflowtwin identify-opportunities \
+  --baseline-analysis artifacts/analysis/demo-analysis.json \
+  --process-analysis artifacts/process/demo-process-analysis.json \
+  --research-pack data/research/northstar-research-v1.json \
+  --manifest artifacts/generation/northstar-demo-42-manifest.json \
+  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json
+```
+
+The command writes full analysis JSON, stakeholder Markdown, compact portfolio JSON, and an
+evidence-network dataset under `artifacts/opportunities/`. Existing files are protected unless
+`--force` is supplied. Ground truth is optional and is consulted only after the portfolio exists.
+
+On the fixed demo, seven raw candidates become six after stable deduplication: one is eligible only
+for a controlled prototype and five need further discovery. All four planted administrative
+patterns are detected, while two additional quality-monitoring candidates remain visible. See the
+[opportunity architecture](docs/architecture/automation-opportunity-identification.md),
+[ADR 0006](docs/decisions/0006-opportunity-identification.md), and
+[local benchmark](docs/architecture/opportunity-identification-benchmark.md).
+
 ## Metrics roadmap
 
 Operational metrics will be defined with explicit timestamps, populations, and units:
@@ -252,7 +289,7 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 3. **Synthetic dataset (completed):** seeded configuration, business-time generation, planted bottlenecks, controlled defects, separate ground truth, manifests, validation, CLI presets, and idempotent batch persistence.
 4. **Operational metrics and baseline analysis (completed):** deterministic timelines and metrics, cohort summaries, quality coverage, material findings, synthetic benchmark evaluation, reproducible reports, and file/database CLI analysis.
 5. **Process intelligence (completed):** reconstruct DFGs and structured models, identify stable variants and loops, compare strict/governed conformance, reconcile baseline evidence, and export process artefacts.
-6. **Evidence-backed automation opportunities:** combine baseline metrics, variants, transition bottlenecks, conformance deviations, and synthetic user-research evidence to rank bounded administrative opportunities with transparent eligibility, value, risk, and confidence inputs. Do not automate or simulate yet.
+6. **Evidence-backed automation opportunities (completed):** link baseline, process, quality, and fictional research evidence; preserve contradictions; apply hard safety gates; rank bounded administrative opportunities; and export an auditable portfolio without recommending, automating, or simulating.
 7. **Recommendation and simulation:** turn an approved opportunity into a deterministic recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
 8. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
 9. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
