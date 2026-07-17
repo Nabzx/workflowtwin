@@ -47,15 +47,9 @@ def decide_shadow_mode(
         status = PrototypeDecisionStatus.DO_NOT_PROCEED
     elif all(criteria.values()):
         status = PrototypeDecisionStatus.PROCEED_SHADOW
-    elif (
-        criteria["direct_effect_present"]
-        and (
-            (criteria["net_burden_positive"] and criteria["observable"])
-            or (
-                scenario.scenario_id == "central"
-                and criteria["sensitivity_not_universally_negative"]
-            )
-        )
+    elif criteria["direct_effect_present"] and (
+        (criteria["net_burden_positive"] and criteria["observable"])
+        or (scenario.scenario_id == "central" and criteria["sensitivity_not_universally_negative"])
     ):
         status = PrototypeDecisionStatus.PROCEED_WITH_CONTROLS
     elif criteria["net_burden_positive"]:
