@@ -19,6 +19,9 @@ from workflowtwin.process_mining.analyzer import ProcessMiningAnalyzer
 from workflowtwin.process_mining.config import ProcessMiningConfig
 from workflowtwin.services.baseline_analysis import input_from_dataset
 from workflowtwin.services.process_analysis import process_input_from_dataset
+from workflowtwin.simulation.analyzer import InterventionSimulator
+from workflowtwin.simulation.config import ScenarioId, SimulationConfig, config_for_scenario
+from workflowtwin.simulation.models import SimulationAnalysis, SimulationInput
 from workflowtwin.synthetic.generator import SyntheticReferralGenerator
 from workflowtwin.synthetic.presets import GenerationPreset, config_for_preset
 
@@ -96,4 +99,58 @@ def demo_opportunity_analysis(
     return OpportunityIdentifier(OpportunityConfig()).analyze(
         demo_opportunity_input,
         analysed_at=datetime(2026, 7, 17, 12, tzinfo=UTC),
+    )
+
+
+@pytest.fixture(scope="session")
+def demo_simulation_input(
+    demo_opportunity_input: OpportunityAnalysisInput,
+    demo_opportunity_analysis: OpportunityAnalysis,
+) -> SimulationInput:
+    """Recreate the fixed source records and link existing analysis artifacts."""
+    dataset = SyntheticReferralGenerator(
+        config_for_preset(GenerationPreset.DEMO, seed=42),
+        generated_at=datetime(2026, 7, 16, 12, tzinfo=UTC),
+    ).generate()
+    assert demo_opportunity_input.manifest is not None
+    assert dataset.manifest.dataset_fingerprint == (
+        demo_opportunity_input.manifest.dataset_fingerprint
+    )
+    return SimulationInput(
+        source=input_from_dataset(dataset, ground_truth=None),
+        baseline=demo_opportunity_input.baseline,
+        process=demo_opportunity_input.process,
+        opportunities=demo_opportunity_analysis,
+        manifest=dataset.manifest,
+        ground_truth=dataset.ground_truth,
+    )
+
+
+@pytest.fixture(scope="session")
+def central_simulation_config(
+    demo_simulation_input: SimulationInput,
+) -> SimulationConfig:
+    candidate = demo_simulation_input.opportunities.candidates[0]
+    return config_for_scenario(
+        scenario_id=ScenarioId.CENTRAL,
+        selected_opportunity_id=candidate.opportunity_id,
+        source_dataset_fingerprint=demo_simulation_input.source.dataset_fingerprint,
+        baseline_analysis_fingerprint=demo_simulation_input.baseline.analysis_fingerprint,
+        process_analysis_fingerprint=(demo_simulation_input.process.process_analysis_fingerprint),
+        opportunity_analysis_fingerprint=(
+            demo_simulation_input.opportunities.opportunity_analysis_fingerprint
+        ),
+        generation_run_id=demo_simulation_input.source.generation_run_id,
+    )
+
+
+@pytest.fixture(scope="session")
+def central_simulation_analysis(
+    demo_simulation_input: SimulationInput,
+    central_simulation_config: SimulationConfig,
+) -> SimulationAnalysis:
+    return InterventionSimulator(central_simulation_config).analyze(
+        demo_simulation_input,
+        analysed_at=datetime(2026, 7, 17, 15, tzinfo=UTC),
+        include_sensitivity=False,
     )
