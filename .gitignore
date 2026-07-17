@@ -22,3 +22,5 @@ artifacts/opportunities/*
 !artifacts/opportunities/.gitkeep
 artifacts/simulation/*
 !artifacts/simulation/.gitkeep
+artifacts/shadow/*
+!artifacts/shadow/.gitkeep
