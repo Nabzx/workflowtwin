@@ -18,6 +18,12 @@ from workflowtwin.cli.identify_opportunities import (
     run_identify_opportunities,
 )
 from workflowtwin.cli.process_mine import configure_process_mine_parser, run_process_mine
+from workflowtwin.cli.shadow_evaluate import (
+    configure_shadow_evaluate_parser,
+    run_shadow_evaluate,
+)
+from workflowtwin.cli.shadow_review import configure_shadow_review_parser, run_shadow_review
+from workflowtwin.cli.shadow_run import configure_shadow_run_parser, run_shadow_run
 from workflowtwin.cli.simulate_intervention import (
     configure_simulate_intervention_parser,
     run_simulate_intervention,
@@ -31,6 +37,7 @@ from workflowtwin.services.synthetic_generation import (
     GenerationPersistenceError,
     SyntheticGenerationService,
 )
+from workflowtwin.shadow.intake import generate_intake_artifacts, write_jsonl
 from workflowtwin.simulation.reporting import SimulationArtifactExistsError
 from workflowtwin.synthetic.artifacts import (
     ArtifactExistsError,
@@ -78,6 +85,8 @@ def _parser() -> argparse.ArgumentParser:
     generate.add_argument("--ground-truth-output", type=Path)
     generate.add_argument("--dataset-output", type=Path)
     generate.add_argument("--validation-output", type=Path)
+    generate.add_argument("--intake-snapshots-output", type=Path)
+    generate.add_argument("--shadow-labels-output", type=Path)
     generate.add_argument("--force", action="store_true")
 
     validate = subparsers.add_parser("validate", help="validate an exported synthetic dataset")
@@ -88,6 +97,9 @@ def _parser() -> argparse.ArgumentParser:
     configure_process_mine_parser(subparsers)
     configure_identify_opportunities_parser(subparsers)
     configure_simulate_intervention_parser(subparsers)
+    configure_shadow_run_parser(subparsers)
+    configure_shadow_review_parser(subparsers)
+    configure_shadow_evaluate_parser(subparsers)
     return parser
 
 
@@ -133,6 +145,12 @@ def _generate(args: argparse.Namespace) -> int:
         write_dataset(args.dataset_output, dataset, overwrite=args.force)
     if args.validation_output is not None:
         write_validation_report(args.validation_output, report, overwrite=args.force)
+    if args.intake_snapshots_output is not None or args.shadow_labels_output is not None:
+        intake_snapshots, shadow_labels = generate_intake_artifacts(dataset)
+        if args.intake_snapshots_output is not None:
+            write_jsonl(args.intake_snapshots_output, intake_snapshots, overwrite=args.force)
+        if args.shadow_labels_output is not None:
+            write_jsonl(args.shadow_labels_output, shadow_labels, overwrite=args.force)
 
     persistence_status = "not requested"
     if args.persist:
@@ -179,6 +197,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             return run_identify_opportunities(args)
         if args.command == "simulate-intervention":
             return run_simulate_intervention(args)
+        if args.command == "shadow-run":
+            return run_shadow_run(args)
+        if args.command == "shadow-review":
+            return run_shadow_review(args)
+        if args.command == "shadow-evaluate":
+            return run_shadow_evaluate(args)
         return _validate(args)
     except (
         AnalysisArtifactExistsError,
