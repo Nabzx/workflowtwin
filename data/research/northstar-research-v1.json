@@ -1,0 +1,286 @@
+{
+  "fictional_data_declaration": "This is fictional synthetic user-research material created for software evaluation and demonstration.",
+  "pack_version": "northstar-research-v1",
+  "sessions": [
+    {
+      "department": "Central referrals",
+      "method": "workflow_walkthrough",
+      "observations": [
+        {
+          "affected_role": "referral_administrator",
+          "adoption_constraints": ["Staff need to see which required field failed validation"],
+          "cohort_dimension": "referral_source",
+          "cohort_value": "gp_practice",
+          "confidence_note": "Repeated operational example, but frequency is participant-reported.",
+          "contradicts": ["OBS-COMP-01"],
+          "current_workaround": "Open the referral and compare administrative fields against a checklist.",
+          "desired_outcome": "Flag missing structured fields before the referral enters the review queue.",
+          "frequency": "daily",
+          "governance_constraints": ["Any external request must remain staff-approved"],
+          "observation_id": "OBS-ADMIN-01",
+          "reported_problem": "GP-practice submissions often need another administrative information check.",
+          "severity": "high",
+          "supported_archetypes": ["intake-completeness-validation"],
+          "supporting_quote": "I want the missing fields shown before I start the full check, not another hidden rule.",
+          "workflow_stage": "intake_completeness"
+        }
+      ],
+      "participant_id": "NORTHSTAR-ADMIN-01",
+      "role": "referral_administrator",
+      "session_date": "2026-06-03",
+      "session_id": "SESSION-ADMIN-01",
+      "topics": ["intake checks", "missing information", "manual review"]
+    },
+    {
+      "department": "Central referrals",
+      "method": "semi_structured_interview",
+      "observations": [
+        {
+          "affected_role": "referral_administrator",
+          "adoption_constraints": ["Warnings must not block valid exception cases"],
+          "cohort_dimension": null,
+          "cohort_value": null,
+          "confidence_note": "Clear workflow description from one role; source causes were not verified.",
+          "contradicts": [],
+          "current_workaround": "Repeat the checklist when new information arrives.",
+          "desired_outcome": "Retain a visible record of completed checks and changed fields.",
+          "frequency": "frequent",
+          "governance_constraints": ["Preserve the original submission and every override"],
+          "observation_id": "OBS-ADMIN-02",
+          "reported_problem": "Information updates create repeated completeness checks and duplicated effort.",
+          "severity": "moderate",
+          "supported_archetypes": ["intake-completeness-validation", "data-quality-ingestion-monitoring"],
+          "supporting_quote": "When an update lands, we cannot always tell what changed, so the safe option is to check again.",
+          "workflow_stage": "intake_completeness"
+        }
+      ],
+      "participant_id": "NORTHSTAR-ADMIN-02",
+      "role": "referral_administrator",
+      "session_date": "2026-06-04",
+      "session_id": "SESSION-ADMIN-02",
+      "topics": ["repeat checks", "audit history", "exceptions"]
+    },
+    {
+      "department": "Scheduling operations",
+      "method": "workflow_walkthrough",
+      "observations": [
+        {
+          "affected_role": "scheduling_coordinator",
+          "adoption_constraints": ["An easy manual retry and override must remain available"],
+          "cohort_dimension": "service_line",
+          "cohort_value": "respiratory",
+          "confidence_note": "Direct walkthrough of the scheduling queue; no time-and-motion study.",
+          "contradicts": [],
+          "current_workaround": "Maintain a separate retry list and reopen failed attempts manually.",
+          "desired_outcome": "Create a clear staff-owned retry queue with failure reasons.",
+          "frequency": "daily",
+          "governance_constraints": ["Do not book or contact anyone without staff action"],
+          "observation_id": "OBS-SCHED-01",
+          "reported_problem": "Failed scheduling attempts are easy to lose among new work.",
+          "severity": "high",
+          "supported_archetypes": ["scheduling-coordination-assistance", "stuck-case-monitoring"],
+          "supporting_quote": "A retry should come back with context, but I still need to decide the next administrative step.",
+          "workflow_stage": "scheduling"
+        }
+      ],
+      "participant_id": "NORTHSTAR-SCHEDULING-01",
+      "role": "scheduling_coordinator",
+      "session_date": "2026-06-06",
+      "session_id": "SESSION-SCHEDULING-01",
+      "topics": ["failed scheduling", "retry queues", "manual override"]
+    },
+    {
+      "department": "Scheduling operations",
+      "method": "semi_structured_interview",
+      "observations": [
+        {
+          "affected_role": "scheduling_coordinator",
+          "adoption_constraints": ["Queue reasons must distinguish waiting from data failure"],
+          "cohort_dimension": null,
+          "cohort_value": null,
+          "confidence_note": "Consistent with the walkthrough, though closure policy varies by team.",
+          "contradicts": [],
+          "current_workaround": "Use calendar reminders and inspect open cases individually.",
+          "desired_outcome": "Surface stalled scheduling cases for a coordinator to review.",
+          "frequency": "frequent",
+          "governance_constraints": ["A monitor must not choose a closure outcome"],
+          "observation_id": "OBS-SCHED-02",
+          "reported_problem": "Non-response and long waits can leave cases without a clear next owner.",
+          "severity": "moderate",
+          "supported_archetypes": ["stuck-case-monitoring", "scheduling-coordination-assistance"],
+          "supporting_quote": "A reminder is useful; deciding whether the case closes is still our job.",
+          "workflow_stage": "scheduling"
+        }
+      ],
+      "participant_id": "NORTHSTAR-SCHEDULING-02",
+      "role": "scheduling_coordinator",
+      "session_date": "2026-06-07",
+      "session_id": "SESSION-SCHEDULING-02",
+      "topics": ["non-response", "open cases", "ownership"]
+    },
+    {
+      "department": "Referral operations",
+      "method": "semi_structured_interview",
+      "observations": [
+        {
+          "affected_role": "operations_manager",
+          "adoption_constraints": ["Routing logic must be inspectable by operations"],
+          "cohort_dimension": "service_line",
+          "cohort_value": "neurology",
+          "confidence_note": "Management view supported by queue reviews, not direct observation of every exception.",
+          "contradicts": ["OBS-NEURO-01", "OBS-COMP-02"],
+          "current_workaround": "Escalate older unassigned cases during daily queue review.",
+          "desired_outcome": "Use explicit administrative rules to suggest an operational team sooner.",
+          "frequency": "daily",
+          "governance_constraints": ["Routing must remain reviewable and reversible"],
+          "observation_id": "OBS-OPS-01",
+          "reported_problem": "Neurology referrals wait in the assignment queue longer than managers expect.",
+          "severity": "high",
+          "supported_archetypes": ["assignment-routing-assistance", "stuck-case-monitoring"],
+          "supporting_quote": "A routing suggestion could remove queue time, but the reason for it has to be visible.",
+          "workflow_stage": "assignment"
+        }
+      ],
+      "participant_id": "NORTHSTAR-OPS-01",
+      "role": "operations_manager",
+      "session_date": "2026-06-10",
+      "session_id": "SESSION-OPS-01",
+      "topics": ["assignment queues", "routing rules", "escalation"]
+    },
+    {
+      "department": "Neurology coordination",
+      "method": "workflow_walkthrough",
+      "observations": [
+        {
+          "affected_role": "service_line_coordinator",
+          "adoption_constraints": ["A coordinator must confirm exceptions before ownership changes"],
+          "cohort_dimension": "service_line",
+          "cohort_value": "neurology",
+          "confidence_note": "Detailed exception examples, but their population frequency is unknown.",
+          "contradicts": ["OBS-OPS-01"],
+          "current_workaround": "Review structured notes and redirect administrative exceptions manually.",
+          "desired_outcome": "Show a suggested route with the rule and preserve manual selection.",
+          "frequency": "occasional",
+          "governance_constraints": ["No silent routing and no inference from narrative text"],
+          "observation_id": "OBS-NEURO-01",
+          "reported_problem": "A single automatic routing rule would miss operational exceptions.",
+          "severity": "high",
+          "supported_archetypes": ["assignment-routing-assistance"],
+          "supporting_quote": "Most cases look routine until an exception changes which team can own the work.",
+          "workflow_stage": "assignment"
+        }
+      ],
+      "participant_id": "NORTHSTAR-SERVICE-01",
+      "role": "service_line_coordinator",
+      "session_date": "2026-06-11",
+      "session_id": "SESSION-SERVICE-01",
+      "topics": ["routing exceptions", "manual confirmation", "transparency"]
+    },
+    {
+      "department": "Dermatology coordination",
+      "method": "workflow_walkthrough",
+      "observations": [
+        {
+          "affected_role": "service_line_coordinator",
+          "adoption_constraints": ["Ownership history must remain visible"],
+          "cohort_dimension": "service_line",
+          "cohort_value": "dermatology",
+          "confidence_note": "Observed handoff workflow; whether each handoff was avoidable was not established.",
+          "contradicts": [],
+          "current_workaround": "Message the next coordinator and update ownership manually.",
+          "desired_outcome": "Make ownership rules and handoff reasons explicit before reassignment.",
+          "frequency": "frequent",
+          "governance_constraints": ["Do not suppress valid specialist handoffs"],
+          "observation_id": "OBS-DERM-01",
+          "reported_problem": "Reassignment creates extra coordination and unclear ownership.",
+          "severity": "high",
+          "supported_archetypes": ["handoff-reduction", "assignment-routing-assistance"],
+          "supporting_quote": "The delay is not only the reassignment; it is finding who owns the next step.",
+          "workflow_stage": "assignment"
+        }
+      ],
+      "participant_id": "NORTHSTAR-SERVICE-02",
+      "role": "service_line_coordinator",
+      "session_date": "2026-06-12",
+      "session_id": "SESSION-SERVICE-02",
+      "topics": ["reassignment", "handoffs", "ownership history"]
+    },
+    {
+      "department": "Data integration",
+      "method": "workflow_walkthrough",
+      "observations": [
+        {
+          "affected_role": "data_integration_lead",
+          "adoption_constraints": ["Alerts need source-specific tolerances"],
+          "cohort_dimension": null,
+          "cohort_value": null,
+          "confidence_note": "Source behaviour is instrumented, but timestamp meaning differs between systems.",
+          "contradicts": [],
+          "current_workaround": "Inspect retry logs after an operational discrepancy is reported.",
+          "desired_outcome": "Monitor delayed, repeated, and out-of-order events by source.",
+          "frequency": "occasional",
+          "governance_constraints": ["Do not interpret data latency as staff performance"],
+          "observation_id": "OBS-DATA-01",
+          "reported_problem": "Source retries and late timestamps can make an event history look misleading.",
+          "severity": "moderate",
+          "supported_archetypes": ["data-quality-ingestion-monitoring"],
+          "supporting_quote": "We need to know whether an event was late before treating the sequence as an operational issue.",
+          "workflow_stage": "ingestion"
+        }
+      ],
+      "participant_id": "NORTHSTAR-DATA-01",
+      "role": "data_integration_lead",
+      "session_date": "2026-06-14",
+      "session_id": "SESSION-DATA-01",
+      "topics": ["timestamp quality", "source retries", "monitoring"]
+    },
+    {
+      "department": "Information governance",
+      "method": "semi_structured_interview",
+      "observations": [
+        {
+          "affected_role": "compliance_governance_lead",
+          "adoption_constraints": ["Prototype in recommendation-only mode with sampled review"],
+          "cohort_dimension": null,
+          "cohort_value": null,
+          "confidence_note": "Policy constraint is clear; implementation controls require later design.",
+          "contradicts": ["OBS-ADMIN-01", "OBS-OPS-01"],
+          "current_workaround": "Require staff to initiate external communication and ownership changes.",
+          "desired_outcome": "Retain approval, audit, fallback, and reversible handling for every future action.",
+          "frequency": "daily",
+          "governance_constraints": ["No autonomous external communication", "No silent routing", "Minimum necessary data"],
+          "observation_id": "OBS-COMP-01",
+          "reported_problem": "Automation enthusiasm can hide approval and audit requirements.",
+          "severity": "high",
+          "supported_archetypes": ["intake-completeness-validation", "assignment-routing-assistance", "scheduling-coordination-assistance"],
+          "supporting_quote": "A useful suggestion is not permission to act; approval and a record are separate requirements.",
+          "workflow_stage": "governance"
+        },
+        {
+          "affected_role": "compliance_governance_lead",
+          "adoption_constraints": ["Only explicit administrative fields may be used"],
+          "cohort_dimension": "service_line",
+          "cohort_value": "neurology",
+          "confidence_note": "Strong governance position; exception frequency remains an operational question.",
+          "contradicts": ["OBS-OPS-01"],
+          "current_workaround": "Staff verify the operational route before assigning ownership.",
+          "desired_outcome": "Make routing assistance explainable and always subject to confirmation.",
+          "frequency": "frequent",
+          "governance_constraints": ["No inference from free text", "No autonomous ownership change"],
+          "observation_id": "OBS-COMP-02",
+          "reported_problem": "Automatic routing could silently apply an incomplete rule.",
+          "severity": "high",
+          "supported_archetypes": ["assignment-routing-assistance"],
+          "supporting_quote": "If the rule cannot explain its administrative inputs, it should not propose a route.",
+          "workflow_stage": "assignment"
+        }
+      ],
+      "participant_id": "NORTHSTAR-COMPLIANCE-01",
+      "role": "compliance_governance_lead",
+      "session_date": "2026-06-16",
+      "session_id": "SESSION-COMPLIANCE-01",
+      "topics": ["approval", "auditability", "data minimisation", "silent failure"]
+    }
+  ],
+  "title": "Northstar Clinics fictional administrative workflow research pack"
+}
