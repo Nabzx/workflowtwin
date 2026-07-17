@@ -1,0 +1,2 @@
+"""Opportunity identification tests."""
+
