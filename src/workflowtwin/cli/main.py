@@ -13,7 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from workflowtwin.analytics.reporting import AnalysisArtifactExistsError
 from workflowtwin.cli.analyze import configure_analyze_parser, run_analyze
+from workflowtwin.cli.process_mine import configure_process_mine_parser, run_process_mine
 from workflowtwin.core.config import get_settings
+from workflowtwin.process_mining.adapters.pm4py import Pm4pyAdapterError
+from workflowtwin.process_mining.reporting import ProcessArtifactExistsError
 from workflowtwin.services.baseline_analysis import AnalysisInputError
 from workflowtwin.services.synthetic_generation import (
     GenerationPersistenceError,
@@ -72,6 +75,7 @@ def _parser() -> argparse.ArgumentParser:
     validate.add_argument("--report-output", type=Path)
     validate.add_argument("--force", action="store_true")
     configure_analyze_parser(subparsers)
+    configure_process_mine_parser(subparsers)
     return parser
 
 
@@ -157,10 +161,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _generate(args)
         if args.command == "analyze":
             return run_analyze(args)
+        if args.command == "process-mine":
+            return run_process_mine(args)
         return _validate(args)
     except (
         AnalysisArtifactExistsError,
         AnalysisInputError,
+        Pm4pyAdapterError,
+        ProcessArtifactExistsError,
         ArtifactExistsError,
         GenerationPersistenceError,
         OSError,
