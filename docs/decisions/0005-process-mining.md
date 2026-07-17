@@ -28,3 +28,6 @@ Application code remains independent of PM4Py and pandas, outputs stay inspectab
 adapter upgrade has a narrow blast radius. Token replay and a policy reference simplify the governed
 model but do not prove optimal ordering or operational quality. Optional Graphviz rendering can fail
 without invalidating discovery. The benchmark remains in memory and is not a production job system.
+PM4Py 2.7.23.2 is pinned for reproducibility. Its community release is AGPL-3.0, so commercial
+distribution or network deployment requires a separate licensing review and potentially a
+commercial PM4Py license.

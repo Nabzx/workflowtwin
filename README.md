@@ -45,7 +45,10 @@ It will:
 - simulate the recommendation's expected operational effect; and
 - compare baseline and simulated metrics without presenting synthetic results as clinical evidence.
 
-The current release includes the API foundation, versioned referral events, seeded synthetic data, and a deterministic baseline-analysis engine. It contains no process mining, LLM calls, workflow automation, simulation, dashboard, authentication, or external integration.
+The current release includes the API foundation, versioned referral events, seeded synthetic data,
+a deterministic baseline engine, and explainable PM4Py-backed process reconstruction and
+conformance. It contains no LLM calls, recommendations, workflow automation, simulation,
+dashboard, authentication, or external integration.
 
 ## Architecture
 
@@ -58,7 +61,7 @@ Client / future React app
           |
    Application services
       /          \
- Domain model   Analysis adapters (future PM4Py / LLM provider)
+ Domain model   Analysis adapters (isolated PM4Py; future LLM provider)
           |
  SQLAlchemy repositories
           |
@@ -67,13 +70,19 @@ Client / future React app
 
 - `src/workflowtwin/api`: HTTP routes and transport schemas.
 - `src/workflowtwin/analytics`: timelines, metrics, cohorts, quality, findings, benchmark evaluation, and reports.
+- `src/workflowtwin/process_mining`: event-log mapping, DFG and variant statistics, PM4Py adapter, reference conformance, process findings, graph data, and reports.
 - `src/workflowtwin/core`: runtime configuration and cross-cutting concerns.
 - `src/workflowtwin/domain`: workflow concepts and invariants, added as the MVP requires them.
 - `src/workflowtwin/services`: use-case orchestration, independent of HTTP.
 - `src/workflowtwin/infrastructure`: persistence and external provider adapters.
 - `apps/web`: reserved for the future React and TypeScript user interface.
 
-The API uses Pydantic settings, structured JSON logging outside local development, SQLAlchemy and Alembic for planned persistence, and dependency inversion at real provider boundaries. PM4Py and an LLM provider abstraction will be introduced only when their first use cases are implemented. See the [technical architecture](docs/architecture/technical-architecture.md) and [initial ADR](docs/decisions/0001-initial-technology-choices.md).
+The API uses Pydantic settings, structured JSON logging outside local development, SQLAlchemy and
+Alembic for persistence, and dependency inversion at real provider boundaries. PM4Py is contained
+behind a typed adapter; no LLM SDK or agent framework is present. See the
+[technical architecture](docs/architecture/technical-architecture.md),
+[process architecture](docs/architecture/process-reconstruction-and-conformance.md), and
+[process-mining ADR](docs/decisions/0005-process-mining.md).
 
 ## Referral data foundation
 
@@ -179,6 +188,49 @@ Finding rules report only cohorts meeting the configured minimum size and use ex
 See the [analysis architecture](docs/architecture/operational-metrics-analysis.md), [metric definitions](docs/architecture/metric-definitions.md), and [ADR 0004](docs/decisions/0004-operational-metrics.md).
 Local tiny, demo, and 10,000-case measurements are recorded in the [baseline benchmark](docs/architecture/baseline-analysis-benchmark.md).
 
+## Process reconstruction and conformance
+
+WorkflowTwin maps all 18 version 1 referral event types to stable administrative activities and
+builds canonical traces ordered by `(event_at, event_id)`. Source retries are deduplicated, genuine
+repeats remain visible, and ingestion order is retained only as quality evidence. Owned statistics
+cover activities, start/end states, transitions, elapsed and business-time delay, variants, loops,
+manual-work context, handoffs, complexity, deviations, and candidate bottlenecks.
+
+The isolated PM4Py 2.7.23.2 adapter verifies a directly-follows graph, discovers one structured
+model with Inductive Miner, and performs token-based replay against two versioned Petri nets:
+
+- `northstar-strict-v1`: the nine-step successful path from submission to completion.
+- `northstar-governed-v1`: documented information loops, limited rerouting, scheduling retries,
+  cancellation, rejection, non-response, completion, and other administrative closure.
+
+Governed conformance does not imply speed, quality, or desirability. Non-conformance can represent
+missing data, a legitimate exception, or reference-model scope rather than an operational error.
+Candidate bottlenecks describe observed associations and always require human investigation.
+
+Run process analysis on an exported dataset:
+
+```bash
+uv run workflowtwin process-mine \
+  --dataset artifacts/generation/demo-dataset.json \
+  --manifest artifacts/generation/northstar-demo-42-manifest.json \
+  --baseline-analysis artifacts/analysis/demo-analysis.json \
+  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json \
+  --analysis-output artifacts/process/demo-process-analysis.json \
+  --report-output artifacts/process/demo-process-report.md \
+  --graph-output artifacts/process/demo-process-graph.json \
+  --case-output artifacts/process/demo-process-cases.jsonl \
+  --visualisation-directory artifacts/process/demo-visualisations
+```
+
+Use `--from-database --generation-run northstar-demo-42` for a completed persisted run. Existing
+outputs are protected unless `--force` is supplied. SVG generation is optional and reports a
+warning if Graphviz is unavailable; core JSON and Markdown analysis remains valid.
+
+For the fixed 1,000-case seed, process mining reconstructs 17 activities, 23 transitions, and 57
+variants. Strict/governed fully conforming rates are 36.3%/87.1%, and all four planted patterns are
+detected after discovery. See the
+[process benchmark](docs/architecture/process-mining-benchmark.md) for demo and 10,000-case results.
+
 ## Metrics roadmap
 
 Operational metrics will be defined with explicit timestamps, populations, and units:
@@ -199,11 +251,12 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 2. **Referral event model (completed):** versioned contracts, explicit vocabulary, UTC timestamps, append-only PostgreSQL persistence, first migration, metric semantics, and ten deterministic fixtures.
 3. **Synthetic dataset (completed):** seeded configuration, business-time generation, planted bottlenecks, controlled defects, separate ground truth, manifests, validation, CLI presets, and idempotent batch persistence.
 4. **Operational metrics and baseline analysis (completed):** deterministic timelines and metrics, cohort summaries, quality coverage, material findings, synthetic benchmark evaluation, reproducible reports, and file/database CLI analysis.
-5. **Process intelligence:** reconstruct variants with PM4Py where useful, detect the leading bottleneck, and expose evidence through the API.
-6. **Recommendation and simulation:** add a deterministic first recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
-7. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
-8. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
-9. **Evaluation and observability:** instrument traces and model/provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact.
+5. **Process intelligence (completed):** reconstruct DFGs and structured models, identify stable variants and loops, compare strict/governed conformance, reconcile baseline evidence, and export process artefacts.
+6. **Evidence-backed automation opportunities:** combine baseline metrics, variants, transition bottlenecks, conformance deviations, and synthetic user-research evidence to rank bounded administrative opportunities with transparent eligibility, value, risk, and confidence inputs. Do not automate or simulate yet.
+7. **Recommendation and simulation:** turn an approved opportunity into a deterministic recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
+8. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
+9. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
+10. **Evaluation and observability:** instrument traces and model/provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact.
 
 ## Repository layout
 
@@ -239,7 +292,7 @@ Run the quality gates:
 pytest --cov
 ruff check .
 ruff format --check .
-mypy src tests alembic
+mypy src tests alembic scripts
 ```
 
 Or run the local stack:
@@ -276,3 +329,7 @@ The health endpoint is intentionally a liveness check in this release. Database 
 ## Safety and evidence
 
 WorkflowTwin analyses administrative workflow performance. Future automation recommendations must be explainable, auditable, reversible where practical, and subject to human approval when risk requires it. Patient-facing or clinical decisions are not delegated to this system. No result derived from fictional or synthetic Northstar Clinics data should be represented as evidence about a real provider or real clinical outcomes.
+
+PM4Py's community distribution is licensed under AGPL-3.0. This portfolio uses it through an
+isolated adapter; any commercial distribution or network deployment must complete an appropriate
+license review and obtain a commercial license where required.

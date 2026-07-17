@@ -53,7 +53,8 @@ Ingestion metadata and source retries never become activities.
 Events are grouped by case, deduplicated by `(source_system, external_event_id)`, then ordered by
 `(event_at, event_id)`. Event time drives sequence and transition delays. Ingestion time remains
 quality metadata. Repeated distinct events remain repeated activities. Unsupported schema versions
-or unmapped event types exclude the affected trace with a visible warning.
+exclude the affected trace; an unmapped event is excluded from its trace. Both conditions are
+counted and reported rather than silently discarded.
 
 ## Discovery and timing
 
@@ -89,12 +90,14 @@ replay can still traverse the structural loop. Governed conformance therefore do
 efficient or desirable path.
 
 Token-based replay is used for case and dataset fitness because it is deterministic and practical
-for the 10,000-case in-memory benchmark. Fitness `1.0` is fully conforming, positive lower fitness is
-partial, and zero is non-conforming. Missing values remain unavailable. Stable deviations are
+for the 10,000-case in-memory benchmark. Fitness `1.0` with no disallowed transparent deviation is
+fully conforming, positive lower fitness or a disallowed deviation is partial, and zero is
+non-conforming. Missing values remain unavailable. Stable deviations are
 derived from replay diagnostics plus transparent sequence checks: unexpected/missing activity,
 repeat, order, early or missing terminal, unexpected terminal, excessive loop, reassignment,
-recategorisation, and scheduling retry. Timeouts or malformed external output affect only the
-relevant conformance result.
+recategorisation, and scheduling retry. The case cap is a hard computational bound; the configured
+timeout is advisory because PM4Py token replay is synchronous. Exceeding it adds trace warnings.
+Malformed external output becomes unavailable conformance rather than a zero score.
 
 ## Findings, graphs, and reproducibility
 
@@ -106,6 +109,7 @@ transitions or variants without recalculating or changing baseline metrics.
 Graph JSON contains stable activity nodes and transition edges with explicit units and no colours or
 coordinates. Optional SVG exports cover frequency/performance DFGs, discovered process tree/Petri
 net, and both references. Graphviz or rendering failure adds a warning and leaves analysis valid.
+The configured minimum frequency filters DFG rendering only; it does not alter canonical statistics.
 
 The process fingerprint hashes source and optional baseline fingerprints, analysis/config versions,
 activity/reference versions, canonical activities, transitions, variants, conformance summaries,
@@ -123,3 +127,5 @@ same typed input and deterministic ordering.
 - In-memory analysis targets the current 10,000-case benchmark, not streaming or distributed logs.
 - Non-conformance can reflect missing source data, legitimate exceptions, or model scope rather than
   an operational error. Every candidate requires human investigation.
+- PM4Py 2.7.23.2 is an AGPL-3.0 community dependency. Commercial use or network distribution needs
+  explicit legal review and potentially PM4Py's commercial licensing route.
