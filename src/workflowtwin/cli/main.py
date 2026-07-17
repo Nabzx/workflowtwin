@@ -13,8 +13,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from workflowtwin.analytics.reporting import AnalysisArtifactExistsError
 from workflowtwin.cli.analyze import configure_analyze_parser, run_analyze
+from workflowtwin.cli.identify_opportunities import (
+    configure_identify_opportunities_parser,
+    run_identify_opportunities,
+)
 from workflowtwin.cli.process_mine import configure_process_mine_parser, run_process_mine
 from workflowtwin.core.config import get_settings
+from workflowtwin.opportunities.reporting import OpportunityArtifactExistsError
 from workflowtwin.process_mining.adapters.pm4py import Pm4pyAdapterError
 from workflowtwin.process_mining.reporting import ProcessArtifactExistsError
 from workflowtwin.services.baseline_analysis import AnalysisInputError
@@ -76,6 +81,7 @@ def _parser() -> argparse.ArgumentParser:
     validate.add_argument("--force", action="store_true")
     configure_analyze_parser(subparsers)
     configure_process_mine_parser(subparsers)
+    configure_identify_opportunities_parser(subparsers)
     return parser
 
 
@@ -163,12 +169,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             return run_analyze(args)
         if args.command == "process-mine":
             return run_process_mine(args)
+        if args.command == "identify-opportunities":
+            return run_identify_opportunities(args)
         return _validate(args)
     except (
         AnalysisArtifactExistsError,
         AnalysisInputError,
         Pm4pyAdapterError,
         ProcessArtifactExistsError,
+        OpportunityArtifactExistsError,
         ArtifactExistsError,
         GenerationPersistenceError,
         OSError,

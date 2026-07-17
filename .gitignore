@@ -18,3 +18,5 @@ artifacts/analysis/*
 !artifacts/analysis/.gitkeep
 artifacts/process/*
 !artifacts/process/.gitkeep
+artifacts/opportunities/*
+!artifacts/opportunities/.gitkeep
