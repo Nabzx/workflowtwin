@@ -46,10 +46,10 @@ It will:
 - compare baseline and simulated metrics without presenting synthetic results as clinical evidence.
 
 The current release includes the API foundation, versioned referral events, seeded synthetic data,
-a deterministic baseline engine, explainable PM4Py-backed process reconstruction, and an
-evidence-gated administrative opportunity portfolio. It contains no LLM calls, intervention
-recommendations, workflow automation, simulation, dashboard, authentication, or external
-integration.
+a deterministic baseline engine, explainable PM4Py-backed process reconstruction, an evidence-gated
+administrative opportunity portfolio, and controlled counterfactual intervention simulation. It
+contains no LLM calls, live recommendations, workflow automation, dashboard, authentication, or
+external integration.
 
 ## Architecture
 
@@ -73,6 +73,7 @@ Client / future React app
 - `src/workflowtwin/analytics`: timelines, metrics, cohorts, quality, findings, benchmark evaluation, and reports.
 - `src/workflowtwin/process_mining`: event-log mapping, DFG and variant statistics, PM4Py adapter, reference conformance, process findings, graph data, and reports.
 - `src/workflowtwin/opportunities`: evidence linking, fictional research, archetypes, candidate rules, safety gates, scoring, portfolio construction, benchmark evaluation, and reports.
+- `src/workflowtwin/simulation`: intervention selection, policy, counterfactual overlays, analysis reuse, comparisons, sensitivity, decisions, and reports.
 - `src/workflowtwin/core`: runtime configuration and cross-cutting concerns.
 - `src/workflowtwin/domain`: workflow concepts and invariants, added as the MVP requires them.
 - `src/workflowtwin/services`: use-case orchestration, independent of HTTP.
@@ -83,8 +84,10 @@ The API uses Pydantic settings, structured JSON logging outside local developmen
 Alembic for persistence, and dependency inversion at real provider boundaries. PM4Py is contained
 behind a typed adapter; no LLM SDK or agent framework is present. See the
 [technical architecture](docs/architecture/technical-architecture.md),
-[process architecture](docs/architecture/process-reconstruction-and-conformance.md), and
-[opportunity architecture](docs/architecture/automation-opportunity-identification.md).
+[process architecture](docs/architecture/process-reconstruction-and-conformance.md),
+[opportunity architecture](docs/architecture/automation-opportunity-identification.md),
+[simulation architecture](docs/architecture/intervention-design-and-simulation.md), and the
+[counterfactual ADR](docs/decisions/0007-counterfactual-simulation.md).
 
 ## Referral data foundation
 
@@ -268,6 +271,39 @@ patterns are detected, while two additional quality-monitoring candidates remain
 [ADR 0006](docs/decisions/0006-opportunity-identification.md), and
 [local benchmark](docs/architecture/opportunity-identification-benchmark.md).
 
+## Controlled counterfactual simulation
+
+WorkflowTwin converts the sole fixed-demo controlled-prototype opportunity into a versioned,
+recommendation-only structured completeness intervention. It evaluates GP-practice cases at referral
+receipt, models detector errors and delayed administrator review, and creates a separate event overlay
+only after simulated approval. Source events remain unchanged. False positives, rejections, timeouts,
+service failures, fallback, and rollback remain visible and add control burden.
+
+Run the central fixed-demo scenario:
+
+```bash
+uv run workflowtwin simulate-intervention \
+  --dataset artifacts/generation/demo-dataset.json \
+  --manifest artifacts/generation/northstar-demo-42-manifest.json \
+  --baseline-analysis artifacts/analysis/demo-analysis.json \
+  --process-analysis artifacts/process/demo-process-analysis.json \
+  --opportunity-analysis artifacts/opportunities/demo-opportunities.json \
+  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json \
+  --scenario central
+```
+
+The command writes analysis JSON, stakeholder Markdown, visualisation-ready comparison JSON, and
+optional case JSONL. It supports a completed PostgreSQL generation run with `--from-database` and
+`--generation-run RUN_ID`; simulated events are never written to operational tables.
+
+The fixed central scenario models fewer manual touches and a faster first completeness check, but
+control overhead leaves net burden slightly negative. Conservative and adverse scenarios are more
+negative; only the optimistic scenario is positive. The central decision is therefore **proceed only
+with additional controls** for a future shadow-mode study, not deployment approval. See the
+[simulation architecture](docs/architecture/intervention-design-and-simulation.md),
+[ADR 0007](docs/decisions/0007-counterfactual-simulation.md), and
+[benchmark](docs/architecture/intervention-simulation-benchmark.md).
+
 ## Metrics roadmap
 
 Operational metrics will be defined with explicit timestamps, populations, and units:
@@ -290,10 +326,11 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 4. **Operational metrics and baseline analysis (completed):** deterministic timelines and metrics, cohort summaries, quality coverage, material findings, synthetic benchmark evaluation, reproducible reports, and file/database CLI analysis.
 5. **Process intelligence (completed):** reconstruct DFGs and structured models, identify stable variants and loops, compare strict/governed conformance, reconcile baseline evidence, and export process artefacts.
 6. **Evidence-backed automation opportunities (completed):** link baseline, process, quality, and fictional research evidence; preserve contradictions; apply hard safety gates; rank bounded administrative opportunities; and export an auditable portfolio without recommending, automating, or simulating.
-7. **Recommendation and simulation:** turn an approved opportunity into a deterministic recommendation, model its assumptions, simulate its operational effect, and compare metric snapshots.
-8. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and baseline-versus-simulated impact.
-9. **Safe automation pilot:** add approval gates, idempotency, audit records, failure handling, and a narrow administrative automation in a controlled environment.
-10. **Evaluation and observability:** instrument traces and model/provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact.
+7. **Controlled intervention simulation (completed):** select the eligible completeness opportunity, define a guarded policy, model human review and failure paths, create immutable event overlays, rerun baseline/process analysis, compare four scenarios, test sensitivity, and decide shadow-mode suitability.
+8. **Shadow-mode intervention prototype:** evaluate recommendations on incoming fictional cases without changing workflow; log review decisions, precision, false-positive burden, latency, policy compliance, promotion gates, and stop conditions.
+9. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and observed-versus-simulated results.
+10. **Safe automation pilot:** only after shadow-mode gates, add approvals, idempotency, audit records, failure handling, and one narrow administrative action in a controlled environment.
+11. **Evaluation and observability:** instrument traces and provider calls, measure quality and adoption, monitor drift and failure modes, and report realised business impact only when it exists.
 
 ## Repository layout
 
