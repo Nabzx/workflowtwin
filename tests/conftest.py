@@ -61,16 +61,20 @@ def demo_opportunity_input() -> OpportunityAnalysisInput:
         .analyze(input_from_dataset(dataset))
         .baseline
     )
-    process = ProcessMiningAnalyzer(
-        ProcessMiningConfig(
-            source_dataset_fingerprint=dataset.manifest.dataset_fingerprint,
-            baseline_analysis_fingerprint=baseline.analysis_fingerprint,
-            generation_run_id=dataset.manifest.generation_run_id,
+    process = (
+        ProcessMiningAnalyzer(
+            ProcessMiningConfig(
+                source_dataset_fingerprint=dataset.manifest.dataset_fingerprint,
+                baseline_analysis_fingerprint=baseline.analysis_fingerprint,
+                generation_run_id=dataset.manifest.generation_run_id,
+            )
         )
-    ).analyze(
-        process_input_from_dataset(dataset, baseline=baseline),
-        analysed_at=datetime(2026, 7, 17, tzinfo=UTC),
-    ).analysis
+        .analyze(
+            process_input_from_dataset(dataset, baseline=baseline),
+            analysed_at=datetime(2026, 7, 17, tzinfo=UTC),
+        )
+        .analysis
+    )
     research = load_research_pack(
         Path("data/research/northstar-research-v1.json"),
         expected_version="northstar-research-v1",

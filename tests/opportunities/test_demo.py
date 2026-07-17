@@ -51,9 +51,7 @@ def test_core_candidates_have_correct_cohorts_controls_and_metrics(
         assert candidate.quantitative_evidence_ids
         assert candidate.qualitative_evidence_ids
         assert RequiredControl.AUDIT_TRAIL in candidate.risk.required_controls
-        assert RequiredControl.PROHIBIT_AUTONOMOUS_EXECUTION in (
-            candidate.risk.required_controls
-        )
+        assert RequiredControl.PROHIBIT_AUTONOMOUS_EXECUTION in (candidate.risk.required_controls)
         assert candidate.future_success_metrics
         assert candidate.observed_burden.expected_benefit_gbp is None
 
@@ -87,9 +85,7 @@ def test_evidence_and_score_components_reconcile(
 def test_assignment_contradictions_remain_visible_and_reduce_confidence(
     demo_opportunity_analysis: OpportunityAnalysis,
 ) -> None:
-    assignment = _candidate(
-        demo_opportunity_analysis, OpportunityArchetypeId.ASSIGNMENT_ROUTING
-    )
+    assignment = _candidate(demo_opportunity_analysis, OpportunityArchetypeId.ASSIGNMENT_ROUTING)
 
     assert len(assignment.contradiction_ids) >= 2
     assert assignment.confidence.classification == "low"

@@ -1,2 +1,1 @@
 """Opportunity identification tests."""
-

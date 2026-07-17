@@ -33,9 +33,7 @@ def test_research_pack_is_explicit_structured_and_varied() -> None:
     assert sum(len(session.observations) for session in pack.sessions) == 10
     assert len({session.role for session in pack.sessions}) == 6
     contradiction_count = sum(
-        bool(item.contradicts)
-        for session in pack.sessions
-        for item in session.observations
+        bool(item.contradicts) for session in pack.sessions for item in session.observations
     )
     assert contradiction_count >= 4
 
@@ -57,9 +55,7 @@ def test_research_rejects_patient_identifiers_and_clinical_claims() -> None:
     session = pack.sessions[0]
     observation = session.observations[0]
 
-    sensitive = observation.model_copy(
-        update={"supporting_quote": "NHS number: 123 456 7890"}
-    )
+    sensitive = observation.model_copy(update={"supporting_quote": "NHS number: 123 456 7890"})
     sensitive_pack = pack.model_copy(
         update={
             "sessions": (

@@ -24,8 +24,7 @@ def _cohort(analysis_input: OpportunityAnalysisInput, seed: OpportunitySeed) -> 
         (
             item
             for item in analysis_input.baseline.cohorts
-            if item.dimension == seed.cohort_dimension
-            and item.value == seed.cohort_value
+            if item.dimension == seed.cohort_dimension and item.value == seed.cohort_value
         ),
         analysis_input.baseline.overall,
     )

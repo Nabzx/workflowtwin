@@ -34,9 +34,7 @@ def test_incompatible_baseline_process_and_manifest_are_rejected(
 def test_unsupported_analysis_version_is_rejected(
     demo_opportunity_input: OpportunityAnalysisInput,
 ) -> None:
-    unsupported = demo_opportunity_input.process.model_copy(
-        update={"analysis_version": "2.0.0"}
-    )
+    unsupported = demo_opportunity_input.process.model_copy(update={"analysis_version": "2.0.0"})
 
     with pytest.raises(ValueError, match="unsupported process analysis version"):
         OpportunityIdentifier(OpportunityConfig()).analyze(
@@ -63,12 +61,8 @@ def test_fingerprint_is_stable_and_weight_sensitive(
         )
     ).analyze(demo_opportunity_input, analysed_at=fixed)
 
-    assert default.opportunity_analysis_fingerprint == (
-        repeated.opportunity_analysis_fingerprint
-    )
-    assert default.opportunity_analysis_fingerprint != (
-        changed.opportunity_analysis_fingerprint
-    )
+    assert default.opportunity_analysis_fingerprint == (repeated.opportunity_analysis_fingerprint)
+    assert default.opportunity_analysis_fingerprint != (changed.opportunity_analysis_fingerprint)
     assert {item.opportunity_id for item in default.candidates} == {
         item.opportunity_id for item in changed.candidates
     }
@@ -83,4 +77,3 @@ def test_no_ground_truth_is_a_supported_not_evaluated_run(
 
     assert analysis.benchmark_evaluation.status == "not_evaluated"
     assert analysis.benchmark_evaluation.expected_count == 0
-

@@ -276,11 +276,7 @@ class OpportunityIdentifier:
             candidates,
             key=lambda item: (
                 section_order[item.portfolio_section],
-                -(
-                    item.score.priority_score
-                    if item.score.priority_score is not None
-                    else -1
-                ),
+                -(item.score.priority_score if item.score.priority_score is not None else -1),
                 item.opportunity_id,
             ),
         )

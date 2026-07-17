@@ -29,9 +29,7 @@ def test_clinical_exclusion_overrides_high_scores(
     demo_opportunity_analysis: OpportunityAnalysis,
 ) -> None:
     candidate = demo_opportunity_analysis.candidates[0]
-    eligibility = assess_eligibility(
-        _seed(), OpportunityConfig(), requires_clinical_judgement=True
-    )
+    eligibility = assess_eligibility(_seed(), OpportunityConfig(), requires_clinical_judgement=True)
     score = calculate_score(
         candidate.value,
         candidate.readiness,
@@ -63,13 +61,10 @@ def test_contradiction_reduces_confidence(
         for item in demo_opportunity_analysis.candidates
         if item.archetype is OpportunityArchetypeId.ASSIGNMENT_ROUTING
     )
-    by_id = {
-        item.evidence_id: item for item in demo_opportunity_analysis.evidence_references
-    }
+    by_id = {item.evidence_id: item for item in demo_opportunity_analysis.evidence_references}
     quantitative = tuple(by_id[item] for item in assignment.quantitative_evidence_ids)
     qualitative = tuple(by_id[item] for item in assignment.qualitative_evidence_ids)
 
     without = assess_confidence(quantitative, qualitative, ())
 
     assert without.score > assignment.confidence.score
-
