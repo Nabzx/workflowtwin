@@ -22,7 +22,13 @@ from workflowtwin.infrastructure.persistence.generation_runs import (
     SyntheticGenerationRunRecord,
 )
 from workflowtwin.infrastructure.persistence.models import ReferralCaseRecord, ReferralEventRecord
+from workflowtwin.process_mining.analyzer import ProcessMiningAnalyzer
+from workflowtwin.process_mining.config import ProcessMiningConfig
 from workflowtwin.services.baseline_analysis import input_from_database, input_from_dataset
+from workflowtwin.services.process_analysis import (
+    process_input_from_database,
+    process_input_from_dataset,
+)
 from workflowtwin.services.synthetic_generation import (
     GenerationPersistenceError,
     PersistenceStatus,
@@ -158,3 +164,29 @@ async def test_file_and_database_analysis_have_same_logical_fingerprint(
         file_bundle.baseline.analysis_fingerprint
     )
     assert database_bundle.case_metrics == file_bundle.case_metrics
+
+
+async def test_file_and_database_process_fingerprints_agree(
+    generation_sessions: async_sessionmaker[AsyncSession],
+) -> None:
+    dataset = _dataset("integration-process-analysis", case_count=20)
+    await SyntheticGenerationService(generation_sessions, batch_size=5).persist(dataset)
+    config = ProcessMiningConfig(
+        source_dataset_fingerprint=dataset.manifest.dataset_fingerprint,
+        generation_run_id=dataset.manifest.generation_run_id,
+        minimum_cohort_size=2,
+    )
+
+    file_bundle = ProcessMiningAnalyzer(config).analyze(process_input_from_dataset(dataset))
+    database_input = await process_input_from_database(
+        generation_sessions, "integration-process-analysis"
+    )
+    database_bundle = ProcessMiningAnalyzer(config).analyze(database_input)
+
+    assert database_bundle.analysis.process_analysis_fingerprint == (
+        file_bundle.analysis.process_analysis_fingerprint
+    )
+    assert database_bundle.analysis.transition_statistics == (
+        file_bundle.analysis.transition_statistics
+    )
+    assert database_bundle.analysis.variants == file_bundle.analysis.variants
