@@ -35,9 +35,16 @@ def select_controlled_prototype(
 def validate_selected_opportunity(
     analysis: OpportunityAnalysis, configured_opportunity_id: str
 ) -> OpportunityCandidate:
-    candidate = select_controlled_prototype(analysis)
-    if candidate.opportunity_id != configured_opportunity_id:
-        raise ValueError(
-            "configured opportunity is not the deterministically selected controlled prototype"
-        )
+    candidate = next(
+        (item for item in analysis.candidates if item.opportunity_id == configured_opportunity_id),
+        None,
+    )
+    if candidate is None:
+        raise ValueError("configured opportunity does not exist in the portfolio")
+    if (
+        candidate.portfolio_section is not PortfolioSection.CONTROLLED_PROTOTYPE
+        or candidate.eligibility.status is not EligibilityStatus.CONTROLLED_PROTOTYPE
+        or candidate.eligibility.hard_failure
+    ):
+        raise ValueError("configured opportunity is not eligible for a controlled prototype")
     return candidate
