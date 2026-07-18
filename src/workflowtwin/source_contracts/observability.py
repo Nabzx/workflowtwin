@@ -193,6 +193,8 @@ def analyse_observability(
             primary = MissedPositiveCategory.CONFLICTING_SOURCE_STATE
         elif first.freshness is not FreshnessStatus.FRESH:
             primary = MissedPositiveCategory.STALE_SOURCE_STATE
+        elif usable_evidence is not None and usable_evidence.available_at > latest_useful:
+            primary = MissedPositiveCategory.EVIDENCE_ARRIVED_TOO_LATE
         elif support is None or support.applicable is None:
             primary = MissedPositiveCategory.CONDITIONAL_APPLICABILITY_UNKNOWN
         elif support.state in {
@@ -202,8 +204,6 @@ def analyse_observability(
             primary = MissedPositiveCategory.UNKNOWN_ABSENT_AMBIGUITY
         elif usable_evidence is None:
             primary = MissedPositiveCategory.SOURCE_EVIDENCE_UNAVAILABLE
-        elif usable_evidence.available_at > latest_useful:
-            primary = MissedPositiveCategory.EVIDENCE_ARRIVED_TOO_LATE
         elif case_id in confirmation_misses:
             primary = MissedPositiveCategory.CONFIRMATION_WINDOW_MISS
         elif case_id not in detected:
@@ -226,8 +226,15 @@ def analyse_observability(
             if usable_evidence.available_at <= latest_useful:
                 timely.add(case_id)
         status = (
-            ObservabilityStatus.OBSERVABLE_AND_DETECTED
-            if case_id in detected
+            ObservabilityStatus.POLICY_PROHIBITED
+            if primary
+            in {
+                MissedPositiveCategory.CONFLICTING_SOURCE_STATE,
+                MissedPositiveCategory.STALE_SOURCE_STATE,
+                MissedPositiveCategory.POLICY_ABSTENTION,
+            }
+            else ObservabilityStatus.OBSERVABLE_AND_DETECTED
+            if case_id in detected and case_id in timely
             else ObservabilityStatus.OBSERVABLE_BUT_MISSED
             if case_id in timely
             else ObservabilityStatus.OBSERVABLE_TOO_LATE
@@ -311,7 +318,7 @@ def analyse_observability(
                     observable_under_contract=len(cases & observable),
                     observable_within_useful_window=len(cases & timely),
                     permitted_under_policy=len(cases & permitted),
-                    detectable_by_explicit_rules=len(cases & explicit & detected),
+                    detectable_by_explicit_rules=len(cases & explicit),
                     surfaced_under_capacity=len(cases & surfaced),
                     contract_ceiling=_ratio(len(cases & observable), total),
                     useful_time_ceiling=_ratio(len(cases & timely), total),

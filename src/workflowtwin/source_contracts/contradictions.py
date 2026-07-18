@@ -69,6 +69,7 @@ def detect_snapshot_contradictions(
     for case_id, case_snapshots in by_case.items():
         ordered = sorted(case_snapshots, key=lambda item: (item.available_at, item.snapshot_id))
         previous = None
+        resolved_snapshot: IncomingReferralSnapshotV2 | None = None
         for snapshot in ordered:
             if previous and snapshot.source_record_version < previous.source_record_version:
                 results.append(
@@ -81,7 +82,56 @@ def detect_snapshot_contradictions(
                         requires_abstention=True,
                     )
                 )
+            support = snapshot.field("supporting_document")
+            if (
+                resolved_snapshot is not None
+                and "supporting_document_missing" in snapshot.source_warning_codes
+            ):
+                results.append(
+                    SourceContradiction(
+                        contradiction_type=ContradictionType.WARNING_AFTER_RESOLUTION,
+                        case_id=case_id,
+                        snapshot_ids=(resolved_snapshot.snapshot_id, snapshot.snapshot_id),
+                        source_systems=(
+                            resolved_snapshot.source_system.value,
+                            snapshot.source_system.value,
+                        ),
+                        resolution_policy="prefer_explicit_resolution_and_flag_stale_warning",
+                        requires_abstention=True,
+                    )
+                )
+            if (
+                support is not None
+                and support.state is AdministrativeFieldStateV2.PRESENT
+                and snapshot.conflict_status.value == "none"
+            ):
+                resolved_snapshot = snapshot
             previous = snapshot
+
+        latest_by_producer: dict[str, IncomingReferralSnapshotV2] = {}
+        for snapshot in ordered:
+            latest_by_producer[snapshot.producer_system] = snapshot
+        producers = sorted(latest_by_producer)
+        for index, left_name in enumerate(producers):
+            left = latest_by_producer[left_name]
+            left_support = left.field("supporting_document")
+            if left_support is None:
+                continue
+            for right_name in producers[index + 1 :]:
+                right = latest_by_producer[right_name]
+                right_support = right.field("supporting_document")
+                if right_support is None or left_support.state is right_support.state:
+                    continue
+                results.append(
+                    SourceContradiction(
+                        contradiction_type=ContradictionType.PRODUCER_DISAGREEMENT,
+                        case_id=case_id,
+                        snapshot_ids=(left.snapshot_id, right.snapshot_id),
+                        source_systems=(left.source_system.value, right.source_system.value),
+                        resolution_policy="abstain_until_producers_publish_consistent_state",
+                        requires_abstention=True,
+                    )
+                )
     return tuple(results)
 
 
