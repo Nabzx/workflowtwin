@@ -12,6 +12,7 @@ from workflowtwin.shadow_refinement.fingerprint import locked_fingerprint
 class DetectorVersion(StrEnum):
     STRICT_V1 = "strict-v1"
     STRICT_V2 = "strict-v2"
+    STRICT_V3 = "strict-v3"
     BALANCED_V1 = "balanced-v1"
 
 
