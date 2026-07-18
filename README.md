@@ -77,6 +77,8 @@ Client / future React app
 - `src/workflowtwin/opportunities`: evidence linking, fictional research, archetypes, candidate rules, safety gates, scoring, portfolio construction, benchmark evaluation, and reports.
 - `src/workflowtwin/simulation`: intervention selection, policy, counterfactual overlays, analysis reuse, comparisons, sensitivity, decisions, and reports.
 - `src/workflowtwin/shadow`: intake snapshots, as-of replay, deterministic detection, policy, recommendation lifecycle, reviews, audit chaining, quality, burden, stop conditions, and promotion gates.
+- `src/workflowtwin/source_contracts`: explicit V2 administrative states, form requirements, source validation, precedence, contradictions, observability ceilings, and compatibility views.
+- `src/workflowtwin/shadow_v3`: pre-registered V2-only detector rules, adaptive confirmation, recommendation lifecycle, capacity evaluation, fingerprint locks, and holdout isolation.
 - `src/workflowtwin/core`: runtime configuration and cross-cutting concerns.
 - `src/workflowtwin/domain`: workflow concepts and invariants, added as the MVP requires them.
 - `src/workflowtwin/services`: use-case orchestration, independent of HTTP.
@@ -92,7 +94,8 @@ behind a typed adapter; no LLM SDK or agent framework is present. See the
 [simulation architecture](docs/architecture/intervention-design-and-simulation.md), and the
 [shadow architecture](docs/architecture/recommendation-shadow-mode.md). Decisions are recorded in
 [ADR 0007](docs/decisions/0007-counterfactual-simulation.md) and
-[ADR 0008](docs/decisions/0008-recommendation-shadow-mode.md).
+[ADR 0008](docs/decisions/0008-recommendation-shadow-mode.md), and
+[ADR 0010](docs/decisions/0010-source-contracts-and-shadow-v3.md).
 
 ## Referral data foundation
 
@@ -400,6 +403,53 @@ The untouched 10,000-case holdout confirmed that decision: `strict-v2` produced 
 capacity-denominator correction are in the
 [refinement benchmark](docs/architecture/shadow-refinement-benchmark.md).
 
+### Source-contract analysis and strict-v3
+
+The failed `strict-v2` recall result triggered an information-availability investigation, not more
+threshold tuning. `IncomingReferralSnapshotV2` represents administrative fields as explicit
+`present`, `absent`, `unknown`, `not_applicable`, `pending_source_update`, `unsupported`, `stale`,
+`conflicting`, or `verification_required` states. It records applicability, producer, event and
+availability timestamps, form and source versions, freshness, conflicts, warnings, manual-review
+state, supersession, and provenance. Generator-only administrative truth remains in a separate file
+and cannot enter detector interfaces. Clinical and identifying fields are prohibited.
+
+On the 3,000-case historical validation replay, V2 made 728 of 901 hidden positives explicitly
+observable within the useful window, an 80.80% evaluation-only recall ceiling. Ceilings were 82.00%
+for manual entry, 81.46% for the referral portal, and 78.69% for secure email; they were 87.21% for
+`NS-INTAKE-1`, 83.40% for `NS-INTAKE-2`, and 0% for unknown forms. This meaningful recoverable signal
+justified a separately registered `strict-v3`; it does not establish production source quality.
+
+`strict-v3` recommends only on trusted explicit administrative absence or verification-required
+states under a matching requirements contract. It abstains on unknown, stale, conflicting, and
+unsupported evidence; observes rather than duplicates an existing warning or manual review; and
+retracts after a superseding resolution. It has no operational writer and uses no LLM or learned
+model.
+
+```bash
+uv run workflowtwin shadow-analyse-misses --force
+uv run workflowtwin source-contract-validate --force
+uv run workflowtwin source-contract-build \
+  --dataset artifacts/generation/demo-dataset.json \
+  --snapshots-output artifacts/source-contract/demo-snapshots-v2.jsonl \
+  --truth-output artifacts/source-contract/demo-generator-truth.json \
+  --validation-output artifacts/source-contract/demo-validation.json
+uv run workflowtwin shadow-v3-develop --force
+uv run workflowtwin shadow-v3-validate --force
+```
+
+Development C passed its gates; Development D narrowly exceeded the 25% detector-positive cap at
+25.40%. The frozen Validation V3 configuration produced 775 detector positives across 3,000 cases,
+with 93.16% precision, 78.39% recall, 3.53 fictional false-positive review hours, 0.25 minutes mean
+latency, 25.83% detector coverage, and 14.87% surfaced coverage. It achieved 100% of its measured
+78.39% observable ceiling, but the coverage gate failed. The final assessment is
+`strict_v3_validation_failed`: no lock was created and holdout V3 seed 808 was not generated,
+labelled, inspected, or evaluated. WorkflowTwin remains recommendation-only shadow software.
+
+See the [source-contract architecture and report](docs/architecture/source-contract-and-shadow-v3.md)
+and [ADR 0010](docs/decisions/0010-source-contracts-and-shadow-v3.md). Cross-version development and
+validation comparisons are controlled; the old V1/V2 holdout is a different population and is not
+an exact causal comparator.
+
 ## Metrics roadmap
 
 Operational metrics will be defined with explicit timestamps, populations, and units:
@@ -425,9 +475,11 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 7. **Controlled intervention simulation (completed):** select the eligible completeness opportunity, define a guarded policy, model human review and failure paths, create immutable event overlays, rerun baseline/process analysis, compare four scenarios, test sensitivity, and decide shadow-mode suitability.
 8. **Shadow-mode intervention prototype (completed):** replay ingestion-ordered structured snapshots; generate recommendation-only outputs; validate fictional reviews; measure precision, recall, abstention, false-positive burden, latency, audit and policy quality; and enforce stop conditions and promotion gates.
 9. **Detector revision and continued shadow evaluation (completed, not promoted):** freeze `strict-v1`; compare fingerprinted `strict-v2` on registered splits; separate detector quality from fictional capacity; report missed positives, cohorts, chronology, Pareto trade-offs, and sensitivity; remain in recommendation-only shadow mode because recall fails the gate.
-10. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and observed-versus-simulated results.
-11. **Safe automation pilot:** only after every mandatory shadow gate passes, add approvals, idempotency, failure handling, and one reversible fictional administrative action.
-12. **Evaluation and observability:** instrument traces and provider calls, measure quality and adoption, monitor observed variation and failure modes, and report realised business impact only when it exists.
+10. **Source-contract analysis and strict-v3 (completed, validation failed):** classify misses, model explicit V2 administrative source states and requirements, calculate observability ceilings, pre-register new splits, and stop before holdout because detector coverage failed validation.
+11. **Source reliability remediation:** investigate producer-side unavailable, unknown, stale, conflicting, and unsupported states; improve synthetic contract tests without tuning a detector or opening holdout V3.
+12. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and observed-versus-simulated results.
+13. **Safe automation pilot:** blocked unless a future separately versioned detector passes every mandatory validation and untouched-holdout gate.
+14. **Evaluation and observability:** instrument traces and provider calls, measure quality and adoption, monitor observed variation and failure modes, and report realised business impact only when it exists.
 
 ## Repository layout
 
