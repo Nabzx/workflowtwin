@@ -1,0 +1,1 @@
+"""Strict shadow refinement tests."""
