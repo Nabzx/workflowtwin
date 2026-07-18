@@ -61,16 +61,28 @@ def _passing_protocol() -> StrictV3Protocol:
     )
 
 
-def test_registered_protocol_matches_every_runtime_lock() -> None:
+@pytest.mark.parametrize(
+    ("changed_field", "expected_mismatch"),
+    [
+        ("source_contract_fingerprint", "source_contract_fingerprint"),
+        ("requirements_contract_fingerprint", "requirements_contract_fingerprint"),
+        ("capacity_fingerprint", "capacity_fingerprint"),
+        ("policy_version", "policy_fingerprint"),
+        ("detector_rule_version", "detector_fingerprint"),
+    ],
+)
+def test_registered_protocol_matches_every_runtime_lock(
+    changed_field: str, expected_mismatch: str
+) -> None:
     protocol = load_v3_protocol(Path("config/shadow/strict-v3-protocol.json"))
     config = StrictV3Config()
     validate_protocol_locks(protocol, config)
     assert protocol.holdout_dataset.seed == 808
     assert protocol.holdout_evaluation_count == 0
-    with pytest.raises(ValueError, match="source_contract_fingerprint"):
+    with pytest.raises(ValueError, match=expected_mismatch):
         validate_protocol_locks(
             protocol,
-            config.model_copy(update={"source_contract_fingerprint": "changed"}),
+            config.model_copy(update={changed_field: "changed"}),
         )
 
 
