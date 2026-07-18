@@ -1,6 +1,8 @@
 """V1 compatibility, deterministic V2 publication, and quality validation."""
 
 from workflowtwin.shadow.fingerprint import shadow_fingerprint
+from workflowtwin.shadow.models import FieldAvailability, IncomingReferralSnapshot
+from workflowtwin.source_contracts.adapters import view_v1, view_v2
 from workflowtwin.source_contracts.generator import v2_snapshot_fingerprint
 from workflowtwin.source_contracts.models import (
     AdministrativeTruthRecord,
@@ -22,6 +24,32 @@ def test_v2_publication_is_deterministic_and_truth_is_separate(
     assert "supporting_document_present" not in IncomingReferralSnapshotV2.model_fields
     assert snapshots[0].schema_version == 2
     assert shadow_fingerprint(snapshots[0]) != shadow_fingerprint(truth[0])
+
+
+def test_read_only_compatibility_views_do_not_reinterpret_v1_unknown(
+    v2_source: tuple[tuple[IncomingReferralSnapshotV2, ...], tuple[AdministrativeTruthRecord, ...]],
+) -> None:
+    v2 = v2_source[0][0]
+    v1 = IncomingReferralSnapshot(
+        snapshot_id="compatibility-v1",
+        case_id=v2.case_id,
+        available_at=v2.available_at,
+        source_event_id=None,
+        source_system=v2.source_system,
+        referral_source=v2.referral_source,
+        requested_service_line=v2.requested_service_line,
+        submitting_organisation_id="fictional-org",
+        form_version=v2.form_version,
+        source_record_version=1,
+        referral_form=FieldAvailability.PRESENT,
+        supporting_document=FieldAvailability.UNKNOWN,
+        source_acknowledgement=FieldAvailability.PRESENT,
+        contact_route=FieldAvailability.PRESENT,
+    )
+    assert view_v1(v1).supporting_document_state == "unknown"
+    assert view_v1(v1).requirements_contract_version is None
+    assert view_v2(v2).schema_version == 2
+    assert shadow_fingerprint(view_v1(v1)) != shadow_fingerprint(view_v2(v2))
 
 
 def test_validation_reports_quality_and_rejects_duplicate_delivery(
