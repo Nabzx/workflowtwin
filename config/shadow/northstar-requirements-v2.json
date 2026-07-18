@@ -1,0 +1,53 @@
+{
+  "contract_id": "northstar-administrative-requirements",
+  "contract_version": "northstar-requirements-v2",
+  "fictional_declaration": "Fictional Northstar administrative data; no real patient records.",
+  "forms": [
+    {
+      "administrative_path": "standard_referral_intake",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "effective_until": null,
+      "form_identifier": "northstar-referral-intake",
+      "form_version": "NS-INTAKE-2",
+      "requirements": [
+        {"administrative_purpose": "establish a submitted referral record", "condition": null, "field_id": "referral_form", "kind": "field", "required": true, "requirement_id": "intake-form"},
+        {"administrative_purpose": "support administrative completeness checking", "condition": null, "field_id": "supporting_document", "kind": "document", "required": true, "requirement_id": "supporting-document"},
+        {"administrative_purpose": "confirm receipt by the submitting source", "condition": null, "field_id": "source_acknowledgement", "kind": "acknowledgement", "required": true, "requirement_id": "source-acknowledgement"},
+        {"administrative_purpose": "provide a non-patient administrative reply route", "condition": {"equals": "present", "field_id": "referral_form"}, "field_id": "routing_contact", "kind": "routing_contact", "required": true, "requirement_id": "routing-contact"}
+      ],
+      "source_exceptions": {},
+      "source_supported_fields": {
+        "manual_entry": ["referral_form", "supporting_document", "source_acknowledgement", "routing_contact"],
+        "referral_portal": ["referral_form", "supporting_document", "source_acknowledgement", "routing_contact"],
+        "secure_email": ["referral_form", "supporting_document", "source_acknowledgement", "routing_contact"]
+      },
+      "unsupported_source_combinations": []
+    },
+    {
+      "administrative_path": "legacy_referral_intake",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "effective_until": null,
+      "form_identifier": "northstar-referral-intake",
+      "form_version": "NS-INTAKE-1",
+      "requirements": [
+        {"administrative_purpose": "establish a submitted legacy referral record", "condition": null, "field_id": "referral_form", "kind": "field", "required": true, "requirement_id": "legacy-intake-form"},
+        {"administrative_purpose": "support legacy administrative completeness checking", "condition": null, "field_id": "supporting_document", "kind": "document", "required": true, "requirement_id": "legacy-supporting-document"},
+        {"administrative_purpose": "confirm receipt by the legacy submitting source", "condition": null, "field_id": "source_acknowledgement", "kind": "acknowledgement", "required": true, "requirement_id": "legacy-source-acknowledgement"},
+        {"administrative_purpose": "provide a non-patient legacy administrative reply route", "condition": {"equals": "present", "field_id": "referral_form"}, "field_id": "routing_contact", "kind": "routing_contact", "required": true, "requirement_id": "legacy-routing-contact"}
+      ],
+      "source_exceptions": {
+        "secure_email": ["routing_contact may require verification"]
+      },
+      "source_supported_fields": {
+        "manual_entry": ["referral_form", "supporting_document", "source_acknowledgement", "routing_contact"],
+        "referral_portal": ["referral_form", "supporting_document", "source_acknowledgement", "routing_contact"],
+        "secure_email": ["referral_form", "supporting_document", "source_acknowledgement", "routing_contact"]
+      },
+      "unsupported_source_combinations": []
+    }
+  ],
+  "provenance_references": [
+    "fictional-northstar-intake-specification-v2",
+    "workflowtwin-source-contract-analysis"
+  ]
+}
