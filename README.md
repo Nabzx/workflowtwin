@@ -377,6 +377,27 @@ See the [shadow architecture](docs/architecture/recommendation-shadow-mode.md),
 fictional capacity proxies. Promotion readiness would not authorise production or autonomous action,
 and no clinical or real-world impact conclusion can be drawn.
 
+### Versioned detector refinement
+
+The original strict detector is frozen as `strict-v1`. A separately fingerprinted `strict-v2`
+confirms explicit document absence after a 120-minute logical window, then passes confirmed signals
+to explainable priority and fictional reviewer-capacity controls. Detector positives remain distinct
+from active, surfaced, reviewed, deferred, and observe-only recommendations, so capacity cannot be
+mistaken for better detector quality.
+
+```bash
+uv run workflowtwin shadow-refine --force  # development and validation only
+uv run workflowtwin shadow-holdout         # locked 10,000-case split, once
+```
+
+The pre-registered development and validation result is `do_not_promote`: confirmation reduces
+volume and false-positive review time but breaches the recall gate and adds 120 minutes of latency.
+The untouched 10,000-case holdout confirmed that decision: `strict-v2` produced 1,686 positives at
+93.12% precision and 51.19% recall, versus 2,048 positives at 93.02% precision and 62.11% recall for
+`strict-v1`. WorkflowTwin therefore remains recommendation-only shadow software. See the
+[refinement architecture](docs/architecture/shadow-detector-refinement.md) and
+[ADR 0009](docs/decisions/0009-shadow-detector-refinement.md).
+
 ## Metrics roadmap
 
 Operational metrics will be defined with explicit timestamps, populations, and units:
@@ -401,7 +422,7 @@ Clinical outcomes and treatment quality are outside the product's decision scope
 6. **Evidence-backed automation opportunities (completed):** link baseline, process, quality, and fictional research evidence; preserve contradictions; apply hard safety gates; rank bounded administrative opportunities; and export an auditable portfolio without recommending, automating, or simulating.
 7. **Controlled intervention simulation (completed):** select the eligible completeness opportunity, define a guarded policy, model human review and failure paths, create immutable event overlays, rerun baseline/process analysis, compare four scenarios, test sensitivity, and decide shadow-mode suitability.
 8. **Shadow-mode intervention prototype (completed):** replay ingestion-ordered structured snapshots; generate recommendation-only outputs; validate fictional reviews; measure precision, recall, abstention, false-positive burden, latency, audit and policy quality; and enforce stop conditions and promotion gates.
-9. **Detector revision and continued shadow evaluation:** reduce strict recommendation volume below reviewer capacity without weakening precision, safety, auditability, or the as-of-time boundary; rerun the fixed profile and time-window comparisons.
+9. **Detector revision and continued shadow evaluation (completed, not promoted):** freeze `strict-v1`; compare fingerprinted `strict-v2` on registered splits; separate detector quality from fictional capacity; report missed positives, cohorts, chronology, Pareto trade-offs, and sensitivity; remain in recommendation-only shadow mode because recall fails the gate.
 10. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and observed-versus-simulated results.
 11. **Safe automation pilot:** only after every mandatory shadow gate passes, add approvals, idempotency, failure handling, and one reversible fictional administrative action.
 12. **Evaluation and observability:** instrument traces and provider calls, measure quality and adoption, monitor observed variation and failure modes, and report realised business impact only when it exists.
