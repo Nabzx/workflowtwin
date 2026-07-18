@@ -1,0 +1,25 @@
+{
+  "assessment_result": "do_not_promote",
+  "configuration_fingerprint": "7ecc87d12fb5fdc30413acec9787afc571ae2caf6a0b42b054b040708cfc9b3b",
+  "detector_version": "strict-v2",
+  "evaluation_fingerprint": "b193f998ffb9ce885d13c3878d1ee66b1f32a8dd8308224c911655673abed578",
+  "fictional": true,
+  "headline_metrics": {
+    "detector_positive_coverage": 0.1686,
+    "detector_positives": 1686,
+    "false_positive_review_hours": 7.733333333333333,
+    "incoming_cases": 10000,
+    "precision": 0.9311981020166074,
+    "recall": 0.5119008803390935,
+    "surfaced_coverage": null
+  },
+  "input_fixture_fingerprint": "4a5b84aba84133218ca4009d85fd7eb0f34bc889f443b8bddc63d41ac89d51d1",
+  "recommendation_identifiers": [
+    "strict-v2-signal-73b7e3d39a968c48",
+    "strict-v2-signal-e96f21a3a6c3aecb",
+    "strict-v2-signal-80e7b107622f70a7",
+    "strict-v2-signal-58c0686aee80e4d2",
+    "strict-v2-signal-d96af42e30f3bfb5"
+  ],
+  "source_contract_fingerprint": "788e945bf8b4dd690d2c000220edb5cc46cf1dcb82c42ab994e0f94947ddc97b"
+}

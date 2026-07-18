@@ -1,0 +1,25 @@
+{
+  "assessment_result": "do_not_promote",
+  "configuration_fingerprint": "d77c462abd139ab5460579043c2adf4af3b172c87c0d2b7c2d26af4f175ea0ba",
+  "detector_version": "strict-v1",
+  "evaluation_fingerprint": "b193f998ffb9ce885d13c3878d1ee66b1f32a8dd8308224c911655673abed578",
+  "fictional": true,
+  "headline_metrics": {
+    "detector_positive_coverage": 0.2048,
+    "detector_positives": 2048,
+    "false_positive_review_hours": 9.533333333333333,
+    "incoming_cases": 10000,
+    "precision": 0.93017578125,
+    "recall": 0.6211281382458429,
+    "surfaced_coverage": null
+  },
+  "input_fixture_fingerprint": "4a5b84aba84133218ca4009d85fd7eb0f34bc889f443b8bddc63d41ac89d51d1",
+  "recommendation_identifiers": [
+    "recommendation-d355f252911c0133",
+    "recommendation-4e32e989716c5d40",
+    "recommendation-380180fe8c20ea7d",
+    "recommendation-c960e29fcc4240dd",
+    "recommendation-cf666c8ac375240e"
+  ],
+  "source_contract_fingerprint": "788e945bf8b4dd690d2c000220edb5cc46cf1dcb82c42ab994e0f94947ddc97b"
+}
