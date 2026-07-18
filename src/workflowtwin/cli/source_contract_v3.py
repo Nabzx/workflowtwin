@@ -157,9 +157,7 @@ def run_source_contract_build(args: argparse.Namespace) -> int:
     definition = load_source_contract(args.source_contract)
     requirements = load_requirements(args.requirements)
     snapshots, truth = generate_v2_intake_artifacts(dataset, requirements)
-    validation = validate_snapshots(
-        snapshots, definition=definition, requirements=requirements
-    )
+    validation = validate_snapshots(snapshots, definition=definition, requirements=requirements)
     write_v2_jsonl(args.snapshots_output, snapshots, overwrite=args.force)
     write_json(
         args.truth_output,

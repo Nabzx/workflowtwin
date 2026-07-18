@@ -23,9 +23,7 @@ def source_contract_visualization(
         if item.cohort_dimension == "overall" and item.cohort_value == "all"
     )
     field_states = Counter(
-        (field.field_id, field.state.value)
-        for snapshot in snapshots
-        for field in snapshot.fields
+        (field.field_id, field.state.value) for snapshot in snapshots for field in snapshot.fields
     )
     freshness = Counter(item.freshness.value for item in snapshots)
     conflicts = Counter(item.conflict_status.value for item in snapshots)
@@ -72,17 +70,13 @@ def source_contract_visualization(
                 (
                     "unknown",
                     sum(
-                        value
-                        for (_field, name), value in field_states.items()
-                        if name == "unknown"
+                        value for (_field, name), value in field_states.items() if name == "unknown"
                     ),
                 ),
                 (
                     "absent",
                     sum(
-                        value
-                        for (_field, name), value in field_states.items()
-                        if name == "absent"
+                        value for (_field, name), value in field_states.items() if name == "absent"
                     ),
                 ),
             )

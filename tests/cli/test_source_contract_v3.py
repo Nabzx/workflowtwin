@@ -47,12 +47,8 @@ def test_source_contract_analysis_and_safe_overwrite(tmp_path: Path) -> None:
     protocol = source.model_copy(
         update={
             "protocol_id": "source-cli-test",
-            "development_datasets": (
-                _old_spec("source-development", DatasetRole.DEVELOPMENT, 31),
-            ),
-            "validation_datasets": (
-                _old_spec("source-validation", DatasetRole.VALIDATION, 32),
-            ),
+            "development_datasets": (_old_spec("source-development", DatasetRole.DEVELOPMENT, 31),),
+            "validation_datasets": (_old_spec("source-validation", DatasetRole.VALIDATION, 32),),
             "holdout_dataset": _old_spec("unused-holdout", DatasetRole.HOLDOUT, 33),
         }
     )
@@ -130,12 +126,8 @@ def test_strict_v3_cli_lock_and_single_use_holdout(tmp_path: Path) -> None:
     protocol = source.model_copy(
         update={
             "protocol_id": "v3-cli-test",
-            "development_datasets": (
-                _v3_spec("v3-development", V3DatasetRole.DEVELOPMENT, 41),
-            ),
-            "validation_dataset": _v3_spec(
-                "v3-validation", V3DatasetRole.VALIDATION, 42
-            ),
+            "development_datasets": (_v3_spec("v3-development", V3DatasetRole.DEVELOPMENT, 41),),
+            "validation_dataset": _v3_spec("v3-validation", V3DatasetRole.VALIDATION, 42),
             "holdout_dataset": _v3_spec("v3-holdout", V3DatasetRole.HOLDOUT, 43),
             "thresholds": V3Thresholds(
                 minimum_precision=0,

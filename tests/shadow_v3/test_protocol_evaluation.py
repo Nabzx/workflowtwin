@@ -18,9 +18,7 @@ from workflowtwin.shadow_v3.protocol import load_v3_protocol, validate_protocol_
 from workflowtwin.source_contracts.io import load_requirements, load_source_contract
 
 
-def _spec(
-    dataset_id: str, role: V3DatasetRole, seed: int, cases: int
-) -> V3DatasetSpecification:
+def _spec(dataset_id: str, role: V3DatasetRole, seed: int, cases: int) -> V3DatasetSpecification:
     return V3DatasetSpecification(
         dataset_id=dataset_id,
         role=role,
@@ -103,6 +101,7 @@ def test_validation_lock_and_holdout_registry_are_single_use(tmp_path: Path) -> 
     )
     assert validation.promotion_assessment == "eligible_for_holdout"
     assert lock_path.exists()
+
     def evaluate_holdout() -> V3Evaluation | None:
         return run_v3_holdout(
             protocol=protocol,

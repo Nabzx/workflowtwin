@@ -113,17 +113,13 @@ def test_producer_disagreement_and_warning_after_resolution_are_detected(
             "producer_system": "producer-b",
         }
     )
-    kinds = {
-        item.contradiction_type for item in detect_snapshot_contradictions((present, warning))
-    }
+    kinds = {item.contradiction_type for item in detect_snapshot_contradictions((present, warning))}
     assert ContradictionType.PRODUCER_DISAGREEMENT in kinds
     assert ContradictionType.WARNING_AFTER_RESOLUTION in kinds
 
 
 def test_taxonomy_is_complete_and_capacity_does_not_change_ceiling(
-    v2_source: tuple[
-        tuple[IncomingReferralSnapshotV2, ...], tuple[AdministrativeTruthRecord, ...]
-    ],
+    v2_source: tuple[tuple[IncomingReferralSnapshotV2, ...], tuple[AdministrativeTruthRecord, ...]],
     requirements: AdministrativeRequirementsContract,
 ) -> None:
     snapshots, truth = v2_source
