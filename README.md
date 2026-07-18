@@ -396,7 +396,9 @@ The untouched 10,000-case holdout confirmed that decision: `strict-v2` produced 
 93.12% precision and 51.19% recall, versus 2,048 positives at 93.02% precision and 62.11% recall for
 `strict-v1`. WorkflowTwin therefore remains recommendation-only shadow software. See the
 [refinement architecture](docs/architecture/shadow-detector-refinement.md) and
-[ADR 0009](docs/decisions/0009-shadow-detector-refinement.md).
+[ADR 0009](docs/decisions/0009-shadow-detector-refinement.md). Detailed results and the transparent
+capacity-denominator correction are in the
+[refinement benchmark](docs/architecture/shadow-refinement-benchmark.md).
 
 ## Metrics roadmap
 
