@@ -154,9 +154,7 @@ def analyse_historical_source_contract(
                 "v2_source_validation": validation.model_dump(mode="json"),
                 "v2_contract_quality": quality.model_dump(mode="json"),
                 "v2_observability": observability.model_dump(mode="json"),
-                "visualization": source_contract_visualization(
-                    observability, quality
-                ),
+                "visualization": source_contract_visualization(observability, quality, v2),
             }
         )
         datasets.append(summary)
