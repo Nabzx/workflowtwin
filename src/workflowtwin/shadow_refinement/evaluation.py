@@ -354,6 +354,9 @@ def evaluate_v2(
     """Evaluate after detector execution; hidden labels enter only in this function."""
     signals = StrictV2Detector(config).run(snapshots)
     confirmed = [item for item in signals if item.status is ConfirmationStatus.CONFIRMED]
+    resolved_case_ids = {
+        item.case_id for item in signals if item.status is ConfirmationStatus.RESOLVED
+    }
     oracle = ShadowEvaluationOracle(labels)
     first_snapshot: dict[UUID, IncomingReferralSnapshot] = {}
     for snapshot in snapshots:
@@ -389,7 +392,7 @@ def evaluate_v2(
             initial_label = oracle.label_at(case_id, snapshot.available_at)
             disposition = (
                 "resolved_during_confirmation_window"
-                if initial_label is ShadowLabelStatus.POSITIVE
+                if case_id in resolved_case_ids
                 else "strict_rule_exclusion"
             )
             missed.append(
