@@ -146,3 +146,28 @@ def test_future_snapshot_is_not_visible_at_cutoff(strict_shadow_config: ShadowCo
     first_b = ShadowModeRunner(strict_shadow_config).run((initial, future_b), max_source_items=1)
     assert first_a.detector_results == first_b.detector_results
     assert first_a.recommendations == first_b.recommendations
+
+
+def test_unchanged_recommendation_is_suppressed_then_expires(
+    strict_shadow_config: ShadowConfig,
+) -> None:
+    start = datetime(2026, 7, 1, 9, tzinfo=UTC)
+    initial = _snapshot(start, 1, FieldAvailability.ABSENT)
+    unchanged = _snapshot(start + timedelta(minutes=5), 2, FieldAvailability.ABSENT)
+    later = _snapshot(start + timedelta(hours=9), 3, FieldAvailability.ABSENT).model_copy(
+        update={"case_id": UUID("22222222-2222-4222-8222-222222222222")}
+    )
+    run = ShadowModeRunner(strict_shadow_config).run((initial, unchanged, later))
+    statuses = [item.status.value for item in run.recommendations if item.case_id == CASE_ID]
+    assert statuses == ["created", "unchanged", "expired"]
+
+
+def test_clinical_fields_are_rejected_at_detector_boundary() -> None:
+    values = _input().model_dump(mode="python")
+    values["diagnosis"] = "not permitted"
+    try:
+        DetectorInput.model_validate(values)
+    except ValueError as error:
+        assert "Extra inputs are not permitted" in str(error)
+    else:
+        raise AssertionError("clinical input must not enter DetectorInput")

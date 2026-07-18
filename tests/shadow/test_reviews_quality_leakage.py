@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 from pydantic import ValidationError
 
+from workflowtwin.shadow import detector as detector_module
 from workflowtwin.shadow.benchmark import benchmark_profiles
 from workflowtwin.shadow.config import ShadowConfig
 from workflowtwin.shadow.models import (
@@ -47,6 +48,7 @@ def test_hidden_labels_do_not_change_detector_output(
     assert changed_labels != labels
     assert first.recommendations == second.recommendations
     assert first.detector_results == second.detector_results
+    assert not hasattr(detector_module, "ShadowEvaluationOracle")
 
 
 def test_benchmark_reviews_and_metrics_use_correct_denominators(
@@ -73,6 +75,15 @@ def test_benchmark_reviews_and_metrics_use_correct_denominators(
     assert evaluation.policy.workflow_mutation_attempts == 0
     assert evaluation.source_to_recommendation_latency.p95_minutes == 0
     assert evaluation.evaluation_fingerprint
+    repeated = evaluate_shadow(
+        run=run,
+        snapshots=snapshots,
+        labels=labels,
+        reviews=reviews,
+        config=strict_shadow_config,
+        detector_runtime_seconds=999.0,
+    )
+    assert repeated.evaluation_fingerprint == evaluation.evaluation_fingerprint
     if any(
         item.breached and item.action in {"pause_shadow_run", "stop_shadow_run"}
         for item in evaluation.stop_conditions
