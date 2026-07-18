@@ -33,6 +33,15 @@ from workflowtwin.cli.simulate_intervention import (
     configure_simulate_intervention_parser,
     run_simulate_intervention,
 )
+from workflowtwin.cli.source_contract_v3 import (
+    configure_source_contract_v3_parsers,
+    run_shadow_analyse_misses,
+    run_shadow_v3_develop,
+    run_shadow_v3_holdout,
+    run_shadow_v3_validate,
+    run_source_contract_build,
+    run_source_contract_validate,
+)
 from workflowtwin.core.config import get_settings
 from workflowtwin.opportunities.reporting import OpportunityArtifactExistsError
 from workflowtwin.process_mining.adapters.pm4py import Pm4pyAdapterError
@@ -106,6 +115,7 @@ def _parser() -> argparse.ArgumentParser:
     configure_shadow_review_parser(subparsers)
     configure_shadow_evaluate_parser(subparsers)
     configure_shadow_refinement_parsers(subparsers)
+    configure_source_contract_v3_parsers(subparsers)
     return parser
 
 
@@ -213,6 +223,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             return run_shadow_refine(args)
         if args.command == "shadow-holdout":
             return run_shadow_holdout(args)
+        if args.command == "shadow-analyse-misses":
+            return run_shadow_analyse_misses(args)
+        if args.command == "source-contract-validate":
+            return run_source_contract_validate(args)
+        if args.command == "source-contract-build":
+            return run_source_contract_build(args)
+        if args.command == "shadow-v3-develop":
+            return run_shadow_v3_develop(args)
+        if args.command == "shadow-v3-validate":
+            return run_shadow_v3_validate(args)
+        if args.command == "shadow-v3-holdout":
+            return run_shadow_v3_holdout(args)
         return _validate(args)
     except (
         AnalysisArtifactExistsError,

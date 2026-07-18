@@ -26,3 +26,7 @@ artifacts/shadow/*
 !artifacts/shadow/.gitkeep
 artifacts/shadow-refinement/*
 !artifacts/shadow-refinement/.gitkeep
+artifacts/source-contract/*
+!artifacts/source-contract/.gitkeep
+artifacts/shadow-v3/*
+!artifacts/shadow-v3/.gitkeep
