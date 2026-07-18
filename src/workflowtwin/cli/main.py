@@ -22,6 +22,11 @@ from workflowtwin.cli.shadow_evaluate import (
     configure_shadow_evaluate_parser,
     run_shadow_evaluate,
 )
+from workflowtwin.cli.shadow_refine import (
+    configure_shadow_refinement_parsers,
+    run_shadow_holdout,
+    run_shadow_refine,
+)
 from workflowtwin.cli.shadow_review import configure_shadow_review_parser, run_shadow_review
 from workflowtwin.cli.shadow_run import configure_shadow_run_parser, run_shadow_run
 from workflowtwin.cli.simulate_intervention import (
@@ -100,6 +105,7 @@ def _parser() -> argparse.ArgumentParser:
     configure_shadow_run_parser(subparsers)
     configure_shadow_review_parser(subparsers)
     configure_shadow_evaluate_parser(subparsers)
+    configure_shadow_refinement_parsers(subparsers)
     return parser
 
 
@@ -203,6 +209,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return run_shadow_review(args)
         if args.command == "shadow-evaluate":
             return run_shadow_evaluate(args)
+        if args.command == "shadow-refine":
+            return run_shadow_refine(args)
+        if args.command == "shadow-holdout":
+            return run_shadow_holdout(args)
         return _validate(args)
     except (
         AnalysisArtifactExistsError,
