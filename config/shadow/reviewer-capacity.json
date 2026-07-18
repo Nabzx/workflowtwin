@@ -1,0 +1,5 @@
+{
+  "profiles": ["unlimited", "constrained", "standard", "stress"],
+  "declaration": "All reviewer availability and capacity values are fictional operational assumptions.",
+  "policy_version": "review-capacity-v1"
+}

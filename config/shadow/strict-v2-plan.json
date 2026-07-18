@@ -1,0 +1,22 @@
+{
+  "accepted_rule_changes": [
+    "Hold explicit supporting-document absence for a 120-minute logical confirmation window.",
+    "Resolve pending concerns when a current structured snapshot supplies the document.",
+    "Abstain on explicit conflicting source state.",
+    "Move an otherwise valid signal to observe-only when explicit as-of manual-review-start is supplied.",
+    "Avoid a duplicate recommendation when an explicit overlapping source warning is supplied."
+  ],
+  "detector_version": "strict-v2",
+  "expected_trade_off": "Lower volume and redundant review at the cost of 120 minutes additional logical latency and possible recall reduction.",
+  "rejected_rule_changes": [
+    "Hard-cap detector positives after detection.",
+    "Use source system, referral source or service line as a risk proxy.",
+    "Activate source-warning suppression on benchmark data where no warning is supplied.",
+    "Infer manual review start from future completeness events.",
+    "Use development or holdout labels in prioritisation."
+  ],
+  "rule_lock_version": "2026-07-18.1",
+  "rules": [
+    {"applicable_forms": ["NS-INTAKE-2"], "applicable_sources": ["referral_portal", "secure_email", "manual_entry"], "as_of_inputs": ["supporting_document", "form_version", "available_at", "source_record_version"], "expected_burden_effect": "Avoid transient absence recommendations.", "expected_recall_trade_off": "May miss concerns resolved within 120 minutes.", "known_limitations": ["No clinical meaning", "Depends on timely source correction"], "reason": "Development diagnostic found corrected snapshots caused false-positive and redundant review burden.", "rule_id": "strict-v2-confirm-supporting-document", "safety_implications": "Adds latency only; retains recommendation-only authority.", "version": "1"}
+  ]
+}

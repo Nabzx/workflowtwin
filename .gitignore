@@ -24,3 +24,5 @@ artifacts/simulation/*
 !artifacts/simulation/.gitkeep
 artifacts/shadow/*
 !artifacts/shadow/.gitkeep
+artifacts/shadow-refinement/*
+!artifacts/shadow-refinement/.gitkeep
