@@ -1,5 +1,6 @@
 """Frozen detector identity and holdout governance regression tests."""
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -56,3 +57,10 @@ def test_holdout_registry_is_single_use_and_detector_locked(tmp_path: Path) -> N
         begin_holdout(
             protocol=protocol, detector_fingerprint="changed-detector", registry_path=path
         )
+
+
+def test_prior_detector_and_holdout_locks_are_unchanged() -> None:
+    locks = json.loads(Path("config/shadow/prior-detector-locks.json").read_text(encoding="utf-8"))
+    assert StrictV2Config().detector_fingerprint == locks["strict_v2"]["detector_fingerprint"]
+    assert locks["prior_holdout"]["evaluation_count"] == 1
+    assert locks["prior_holdout"]["promotion_assessment"] == "do_not_promote"
