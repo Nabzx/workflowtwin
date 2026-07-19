@@ -12,6 +12,11 @@ coverage.xml
 htmlcov/
 dist/
 build/
+node_modules/
+apps/web/dist/
+apps/web/playwright-report/
+apps/web/test-results/
+*.tsbuildinfo
 artifacts/generation/*
 !artifacts/generation/.gitkeep
 artifacts/analysis/*
