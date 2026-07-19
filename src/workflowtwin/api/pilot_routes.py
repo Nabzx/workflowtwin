@@ -153,9 +153,7 @@ def _decide(
     )
 
 
-def _restore_revision(
-    service: PilotService, draft_id: str, payload: DraftApprovalRequest
-) -> None:
+def _restore_revision(service: PilotService, draft_id: str, payload: DraftApprovalRequest) -> None:
     draft = service.draft(draft_id)
     if draft.current_revision_id == payload.revision_id:
         return

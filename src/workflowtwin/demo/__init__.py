@@ -1,2 +1,1 @@
 """Prepared fictional presentation data."""
-
