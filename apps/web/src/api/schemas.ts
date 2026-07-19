@@ -183,4 +183,4 @@ export type PilotSummary = z.infer<typeof pilotSummarySchema>;
 export type Recommendation = z.infer<typeof recommendationSchema>;
 export type Draft = z.infer<typeof draftSchema>;
 export type AuditRecord = z.infer<typeof auditSchema>[number];
-
+export type PilotAction = z.infer<typeof actionSchema>;
