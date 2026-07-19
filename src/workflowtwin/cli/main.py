@@ -17,32 +17,16 @@ from workflowtwin.cli.identify_opportunities import (
     configure_identify_opportunities_parser,
     run_identify_opportunities,
 )
+from workflowtwin.cli.pilot import configure_pilot_parsers, run_demo, run_pilot
 from workflowtwin.cli.process_mine import configure_process_mine_parser, run_process_mine
-from workflowtwin.cli.shadow_evaluate import (
-    configure_shadow_evaluate_parser,
-    run_shadow_evaluate,
-)
-from workflowtwin.cli.shadow_refine import (
-    configure_shadow_refinement_parsers,
-    run_shadow_holdout,
-    run_shadow_refine,
-)
-from workflowtwin.cli.shadow_review import configure_shadow_review_parser, run_shadow_review
+from workflowtwin.cli.serve import configure_serve_parser, run_serve
 from workflowtwin.cli.shadow_run import configure_shadow_run_parser, run_shadow_run
 from workflowtwin.cli.simulate_intervention import (
     configure_simulate_intervention_parser,
     run_simulate_intervention,
 )
-from workflowtwin.cli.source_contract_v3 import (
-    configure_source_contract_v3_parsers,
-    run_shadow_analyse_misses,
-    run_shadow_v3_develop,
-    run_shadow_v3_holdout,
-    run_shadow_v3_validate,
-    run_source_contract_build,
-    run_source_contract_validate,
-)
 from workflowtwin.core.config import get_settings
+from workflowtwin.intake.requirements import load_northstar_requirements
 from workflowtwin.opportunities.reporting import OpportunityArtifactExistsError
 from workflowtwin.process_mining.adapters.pm4py import Pm4pyAdapterError
 from workflowtwin.process_mining.reporting import ProcessArtifactExistsError
@@ -51,8 +35,9 @@ from workflowtwin.services.synthetic_generation import (
     GenerationPersistenceError,
     SyntheticGenerationService,
 )
-from workflowtwin.shadow.intake import generate_intake_artifacts, write_jsonl
+from workflowtwin.shadow.intake import write_jsonl
 from workflowtwin.simulation.reporting import SimulationArtifactExistsError
+from workflowtwin.source_contracts.generator import generate_v2_intake_artifacts
 from workflowtwin.synthetic.artifacts import (
     ArtifactExistsError,
     load_dataset,
@@ -100,7 +85,6 @@ def _parser() -> argparse.ArgumentParser:
     generate.add_argument("--dataset-output", type=Path)
     generate.add_argument("--validation-output", type=Path)
     generate.add_argument("--intake-snapshots-output", type=Path)
-    generate.add_argument("--shadow-labels-output", type=Path)
     generate.add_argument("--force", action="store_true")
 
     validate = subparsers.add_parser("validate", help="validate an exported synthetic dataset")
@@ -112,10 +96,8 @@ def _parser() -> argparse.ArgumentParser:
     configure_identify_opportunities_parser(subparsers)
     configure_simulate_intervention_parser(subparsers)
     configure_shadow_run_parser(subparsers)
-    configure_shadow_review_parser(subparsers)
-    configure_shadow_evaluate_parser(subparsers)
-    configure_shadow_refinement_parsers(subparsers)
-    configure_source_contract_v3_parsers(subparsers)
+    configure_pilot_parsers(subparsers)
+    configure_serve_parser(subparsers)
     return parser
 
 
@@ -161,12 +143,9 @@ def _generate(args: argparse.Namespace) -> int:
         write_dataset(args.dataset_output, dataset, overwrite=args.force)
     if args.validation_output is not None:
         write_validation_report(args.validation_output, report, overwrite=args.force)
-    if args.intake_snapshots_output is not None or args.shadow_labels_output is not None:
-        intake_snapshots, shadow_labels = generate_intake_artifacts(dataset)
-        if args.intake_snapshots_output is not None:
-            write_jsonl(args.intake_snapshots_output, intake_snapshots, overwrite=args.force)
-        if args.shadow_labels_output is not None:
-            write_jsonl(args.shadow_labels_output, shadow_labels, overwrite=args.force)
+    if args.intake_snapshots_output is not None:
+        intake_snapshots, _ = generate_v2_intake_artifacts(dataset, load_northstar_requirements())
+        write_jsonl(args.intake_snapshots_output, intake_snapshots, overwrite=args.force)
 
     persistence_status = "not requested"
     if args.persist:
@@ -215,26 +194,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             return run_simulate_intervention(args)
         if args.command == "shadow-run":
             return run_shadow_run(args)
-        if args.command == "shadow-review":
-            return run_shadow_review(args)
-        if args.command == "shadow-evaluate":
-            return run_shadow_evaluate(args)
-        if args.command == "shadow-refine":
-            return run_shadow_refine(args)
-        if args.command == "shadow-holdout":
-            return run_shadow_holdout(args)
-        if args.command == "shadow-analyse-misses":
-            return run_shadow_analyse_misses(args)
-        if args.command == "source-contract-validate":
-            return run_source_contract_validate(args)
-        if args.command == "source-contract-build":
-            return run_source_contract_build(args)
-        if args.command == "shadow-v3-develop":
-            return run_shadow_v3_develop(args)
-        if args.command == "shadow-v3-validate":
-            return run_shadow_v3_validate(args)
-        if args.command == "shadow-v3-holdout":
-            return run_shadow_v3_holdout(args)
+        if args.command == "pilot-run":
+            return run_pilot(args)
+        if args.command == "demo":
+            return run_demo(args)
+        if args.command == "serve":
+            return run_serve(args)
         return _validate(args)
     except (
         AnalysisArtifactExistsError,
