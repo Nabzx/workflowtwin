@@ -4,9 +4,11 @@ import structlog
 from fastapi import FastAPI
 
 from workflowtwin import __version__
+from workflowtwin.api.pilot_routes import router as pilot_router
 from workflowtwin.api.routes import router
 from workflowtwin.core.config import Settings, get_settings
 from workflowtwin.core.logging import configure_logging
+from workflowtwin.pilot.demo import build_demo_pilot
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -24,7 +26,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version=__version__,
     )
     application.state.settings = runtime_settings
+    pilot_run, pilot_service = build_demo_pilot()
+    application.state.pilot_run = pilot_run
+    application.state.pilot_service = pilot_service
     application.include_router(router)
+    application.include_router(pilot_router)
 
     structlog.get_logger(__name__).info(
         "application_configured",
