@@ -119,6 +119,14 @@ svg { width: 18px; height: 18px; flex: 0 0 auto; }
 .page-state { display: grid; min-height: 65vh; place-items: center; align-content: center; gap: 12px; padding: 32px; text-align: center; }
 .page-state p, .page-state h2 { margin: 0; }
 .page-state--error svg { color: var(--danger); }
+.skeleton-lines { display: grid; width: min(360px, 80vw); gap: 7px; margin-top: 10px; }
+.skeleton-lines i { display: block; height: 9px; background: linear-gradient(90deg, var(--surface-muted), var(--border), var(--surface-muted)); background-size: 200% 100%; border-radius: 2px; animation: skeleton 1.4s ease infinite; }
+.skeleton-lines i:nth-child(2) { width: 78%; }
+.skeleton-lines i:nth-child(3) { width: 56%; }
+@keyframes skeleton { to { background-position: -200% 0; } }
+.offline-banner { position: sticky; top: 0; z-index: 14; padding: 8px 16px; color: var(--text); text-align: center; background: color-mix(in srgb, var(--warning) 18%, var(--surface)); border-bottom: 1px solid var(--warning); font-size: 12px; }
+.not-found > span { color: var(--accent-strong); font-family: var(--font-mono); font-size: 13px; }
+.not-found h1 { margin: 0; font-size: 27px; }
 .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .empty-state { padding: 36px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); }
