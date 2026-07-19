@@ -1,558 +1,251 @@
 # WorkflowTwin
 
-WorkflowTwin is an AI-powered process intelligence and automation platform. It is designed to reconstruct how operational workflows actually run, find bottlenecks and repeated manual work, recommend targeted automations, and measure whether those changes improve the process.
+WorkflowTwin is a process-intelligence and safe automation portfolio project. It reconstructs an
+operational workflow, quantifies friction, links evidence to an automation opportunity, simulates
+the expected effect, evaluates the recommendation in shadow mode, and demonstrates a reversible
+human-approved action.
 
-The initial case study uses **Northstar Clinics**, a fictional UK healthcare provider. All organisations, referrals, users, and results in this repository are fictional or synthetic. WorkflowTwin focuses on administrative operations; it does not diagnose patients, recommend treatment, or make clinical decisions.
+The initial customer, **Northstar Clinics**, is a fictional UK healthcare provider. Every referral,
+person, organisation, metric, and result in this repository is fictional or synthetic. WorkflowTwin
+handles administrative workflow evidence only. It does not diagnose, prioritise clinical urgency,
+recommend treatment, or claim real clinical or commercial outcomes.
 
-## The problem
+## Product story
 
-Referral operations often span inboxes, forms, handoffs, and scheduling systems. Teams can see individual cases but struggle to answer system-level questions:
+```text
+Operational data
+  -> Process analysis
+  -> Opportunity evidence
+  -> Counterfactual simulation
+  -> Shadow evaluation
+  -> Human-approved fictional pilot
+```
 
-- Where do referrals wait, and why?
-- Which missing fields cause the most rework?
-- Where do staff repeat manual checks or duplicate work?
-- Which automation would remove friction without introducing unacceptable risk?
-- Did a deployed change improve throughput, adoption, and cost in practice?
+Northstar's fictional administrators receive referrals, check required information, request missing
+items, categorise and assign work, schedule appointments, notify patients, and record outcomes. The
+case study explores incomplete submissions, manual checks, repeated work, slow handoffs, inconsistent
+categorisation, stuck referrals, and weak visibility into automation impact.
 
-Northstar Clinics' fictional workflow receives a referral, checks it for required information, requests anything missing, categorises it, assigns a clinical team, schedules an appointment, notifies the patient, and records the final administrative outcome. Its current process has incomplete submissions, slow handoffs, inconsistent categorisation, duplicated work, stuck cases, and no reliable automation ROI measurement.
+WorkflowTwin answers five practical questions:
 
-## Product vision
+1. What process actually occurred, including variants, loops, waits, and rework?
+2. Which bottleneck has enough quantitative and qualitative evidence to act on?
+3. What might improve under explicit counterfactual assumptions?
+4. Does the detector meet quality, safety, and reviewer-capacity constraints?
+5. Can an approved administrative action be executed locally, audited, deduplicated, and reversed?
 
-WorkflowTwin will combine event-log analysis, process mining, qualitative operational evidence, simulation, and auditable automation recommendations. Each recommendation should connect evidence to an expected operational effect, state its assumptions and safety constraints, and remain measurable after deployment.
+## Quick start
 
-The long-term product will:
+```bash
+uv sync --extra dev
+uv run workflowtwin demo
+uv run workflowtwin serve
+```
 
-1. Ingest workflow records and event logs.
-2. Reconstruct observed process variants as a graph.
-3. Measure processing time, waiting time, rework, and manual touches.
-4. Surface bottlenecks, unusual cases, and supporting evidence.
-5. Recommend and simulate a targeted administrative automation.
-6. Deploy approved automations with human oversight and audit trails.
-7. Compare baseline and post-change performance, including adoption and failures.
+Open `http://127.0.0.1:8000/docs` for the API. Use
+`uv run workflowtwin demo --reset` to replace generated files or
+`uv run workflowtwin demo --skip-heavy-analysis` to prepare only detector and pilot evidence.
 
-## Smallest credible MVP
+The demo writes:
 
-The first end-to-end MVP will use clearly labelled synthetic referral events to answer one decision: **where is the largest operational bottleneck, and could one proposed administrative automation improve it?**
+- `artifacts/demo/demo-seed.json`: compact stage lineage and the API command;
+- `artifacts/demo/pilot-run.json`: typed policy, recommendations, drafts, decisions, actions,
+  rollbacks, metrics, gates, audit records, fingerprints, and assessment;
+- `artifacts/demo/pilot-report.md`: stakeholder-readable evidence and limitations.
 
-It will:
+Generated artifacts are ignored by Git. The command is deterministic for the fixed inputs.
+A compact future-UI fixture is retained at
+`data/demo/northstar-pilot-ui-seed-v1.json`.
 
-- generate or import a reproducible synthetic referral event log;
-- validate and persist cases and events;
-- reconstruct the observed referral flow and common variants;
-- calculate cycle time, waiting time, rework, manual touches, and throughput;
-- identify the largest evidence-backed bottleneck;
-- present one rules-based automation recommendation with assumptions and an audit trail;
-- simulate the recommendation's expected operational effect; and
-- compare baseline and simulated metrics without presenting synthetic results as clinical evidence.
+## Supported product path
 
-The current release includes the API foundation, versioned referral events, seeded synthetic data,
-a deterministic baseline engine, explainable PM4Py-backed process reconstruction, an evidence-gated
-administrative opportunity portfolio, and controlled counterfactual intervention simulation. It
-also contains a recommendation-only, ingestion-ordered shadow detector with human-review contracts,
-hidden-label evaluation, tamper-evident audit chaining, stop conditions, and promotion gates. It
-contains no LLM calls, live recommendations, workflow automation, dashboard, authentication, or
-external integration.
+There is one current intake and one current detector:
+
+| Product concept | Supported implementation |
+|---|---|
+| Intake | **Northstar intake contract**, implemented by `IncomingReferralSnapshotV2` |
+| Detector | **completeness-review-detector-v1** |
+| Detector lineage | unchanged strict-v3 rules and original fingerprint |
+| Action | create a local administrative missing-information draft task |
+| Authority | every action requires a permitted fictional human reviewer |
+| Communication | none; no send endpoint or external adapter exists |
+
+The product alias does not hide the experiment history. Strict-v3 failed its original pre-registered
+detector-positive coverage gate, and its historical result remains
+`strict_v3_validation_failed`. The separate pilot policy controls actual surfaced workload rather
+than rewriting that result. Strict-v1, strict-v2, and strict-v3 evidence is summarized in the
+[detector evolution](docs/experiments/shadow-detector-evolution.md); the complete implementation
+history remains in Git and the annotated `shadow-evaluation-complete` tag.
+
+## Fictional pilot
+
+The supported action creates a deterministic draft from explicit missing administrative fields and
+requirements rules. It uses no LLM. A draft includes a fictional case identifier, administrative
+recipient role, form version, source and requirements references, expiry, immutable revisions, a
+human-review warning, and a statement that it has not been sent.
+
+A reviewer can edit, approve, approve with edits, reject, cancel, mark unnecessary, or request more
+context. Approval is rejected unless the role, recommendation, current revision, provenance, policy
+decision, conflict state, and expiry checks pass. A successful approval creates only an in-memory
+mock task marked `ready_for_manual_sending`; it does not send anything or change referral events.
+
+Stable idempotency keys derive from recommendation ID, draft revision, policy version, and action
+type. Replays return a duplicate-suppressed action instead of another task. Rollback is idempotent,
+preserves task history, records actor and reason, and restores a rolled-back mock state even after
+cancellation.
+
+The deterministic pilot seed reports:
+
+| Measure | Fictional result |
+|---|---:|
+| Incoming cases | 120 |
+| Detector precision | 96.6% |
+| Detector recall | 80.0% |
+| Detector-positive coverage | 24.2% |
+| Surfaced recommendation coverage | 10.0% |
+| Human reviews | 3 |
+| Local task commits | 2 |
+| Verified rollbacks | 1 |
+| External messages | 0 |
+| Operational event mutations | 0 |
+| Assessment | `ready_for_fictional_pilot_demo` |
+
+This assessment authorises only the fictional local demonstration. It is not production approval.
+
+## Gates and metrics
+
+The versioned `northstar-fictional-pilot-policy-v1` evaluates:
+
+- **Safety:** no clinical-field access, automatic communication, unapproved action, rejection,
+  routing, service-line change, or operational workflow mutation.
+- **Detector quality:** precision at least 90%, recall at least 72% on evaluable labels, bounded
+  false-positive review burden, cohort reporting, and no critical cohort failure.
+- **Reviewer capacity:** surfaced coverage at most 20%, bounded review minutes and queue depth,
+  P95 latency within SLO, and controlled expiry/backlog.
+- **Auditability:** complete provenance, policy, reviewer, action, rollback, and valid audit-chain
+  linkage.
+- **Reliability:** deterministic replay, action idempotency, local adapter availability, and
+  successful rollback.
+
+Raw detector-positive coverage remains visible, but it is not treated as work that a reviewer
+actually received. Stop conditions pause or revise the pilot when any mandatory safety, quality,
+capacity, audit, or reliability gate fails.
+
+The system does not report messages sent, referrals resolved, realised staff hours, cost reduction,
+production ROI, or clinical outcomes.
 
 ## Architecture
 
-WorkflowTwin begins as a modular monolith: one FastAPI service with explicit domain, service, and infrastructure boundaries, backed by PostgreSQL. This keeps transactions and local development simple while leaving analysis work separable from HTTP and persistence concerns.
+WorkflowTwin is a typed Python 3.12 modular monolith. FastAPI owns transport, application modules
+coordinate use cases, deterministic domain modules own analysis and policy, PM4Py is isolated behind
+an adapter, and SQLAlchemy/Alembic own the existing operational event store. The pilot deliberately
+uses an isolated in-memory adapter and never writes to operational event tables.
+
+```mermaid
+flowchart LR
+    Events[Immutable synthetic events] --> Baseline[Baseline metrics]
+    Events --> Process[PM4Py process analysis]
+    Baseline --> Opportunity[Evidence-backed opportunity]
+    Process --> Opportunity
+    Opportunity --> Simulation[Counterfactual simulation]
+    Simulation --> Intake[Northstar intake contract V2]
+    Intake --> Detector[completeness-review-detector-v1]
+    Detector --> Queue[Capacity-limited review queue]
+    Queue --> Human{Human decision}
+    Human -->|approve current revision| Mock[Local mock task]
+    Human -->|edit/reject/cancel| Audit[Append-only audit]
+    Mock --> Rollback[Idempotent rollback]
+    Mock --> Audit
+    Rollback --> Audit
+```
+
+Key modules:
+
+- `analytics`, `process_mining`, `opportunities`, `simulation`: operational evidence pipeline;
+- `intake`: supported V2 product contract and requirements;
+- `detector`: supported alias and auditable strict-v3 lineage adapter;
+- `pilot`: drafts, policy, review coordination, mock actions, rollback, metrics, gates, reports;
+- `api`: service and versioned fictional-pilot routes;
+- `experiments`: compact historical golden readers only;
+- `infrastructure`: PostgreSQL persistence for immutable operational data.
+
+See [human-approved pilot architecture](docs/architecture/human-approved-pilot.md),
+[technical architecture](docs/architecture/technical-architecture.md), and
+[ADR 0011](docs/decisions/0011-supported-product-and-pilot.md).
+
+## API
+
+The local fictional API exposes:
 
 ```text
-Client / future React app
-          |
-      FastAPI API
-          |
-   Application services
-      /          \
- Domain model   Analysis adapters (isolated PM4Py; future LLM provider)
-          |
- SQLAlchemy repositories
-          |
-      PostgreSQL
+GET  /api/v1/pilot/summary
+GET  /api/v1/pilot/recommendations
+GET  /api/v1/pilot/recommendations/{id}
+POST /api/v1/pilot/recommendations/{id}/review
+GET  /api/v1/pilot/drafts
+GET  /api/v1/pilot/drafts/{id}
+POST /api/v1/pilot/drafts/{id}/edit
+POST /api/v1/pilot/drafts/{id}/approve
+POST /api/v1/pilot/drafts/{id}/reject
+POST /api/v1/pilot/drafts/{id}/cancel
+POST /api/v1/pilot/drafts/{id}/rollback
+GET  /api/v1/pilot/audit
+GET  /api/v1/pilot/gates
 ```
 
-- `src/workflowtwin/api`: HTTP routes and transport schemas.
-- `src/workflowtwin/analytics`: timelines, metrics, cohorts, quality, findings, benchmark evaluation, and reports.
-- `src/workflowtwin/process_mining`: event-log mapping, DFG and variant statistics, PM4Py adapter, reference conformance, process findings, graph data, and reports.
-- `src/workflowtwin/opportunities`: evidence linking, fictional research, archetypes, candidate rules, safety gates, scoring, portfolio construction, benchmark evaluation, and reports.
-- `src/workflowtwin/simulation`: intervention selection, policy, counterfactual overlays, analysis reuse, comparisons, sensitivity, decisions, and reports.
-- `src/workflowtwin/shadow`: intake snapshots, as-of replay, deterministic detection, policy, recommendation lifecycle, reviews, audit chaining, quality, burden, stop conditions, and promotion gates.
-- `src/workflowtwin/source_contracts`: explicit V2 administrative states, form requirements, source validation, precedence, contradictions, observability ceilings, and compatibility views.
-- `src/workflowtwin/shadow_v3`: pre-registered V2-only detector rules, adaptive confirmation, recommendation lifecycle, capacity evaluation, fingerprint locks, and holdout isolation.
-- `src/workflowtwin/core`: runtime configuration and cross-cutting concerns.
-- `src/workflowtwin/domain`: workflow concepts and invariants, added as the MVP requires them.
-- `src/workflowtwin/services`: use-case orchestration, independent of HTTP.
-- `src/workflowtwin/infrastructure`: persistence and external provider adapters.
-- `apps/web`: reserved for the future React and TypeScript user interface.
+There is intentionally no send, contact, referral-status, routing, or service-line endpoint.
+Authentication is out of scope for this local portfolio demo.
 
-The API uses Pydantic settings, structured JSON logging outside local development, SQLAlchemy and
-Alembic for persistence, and dependency inversion at real provider boundaries. PM4Py is contained
-behind a typed adapter; no LLM SDK or agent framework is present. See the
-[technical architecture](docs/architecture/technical-architecture.md),
-[process architecture](docs/architecture/process-reconstruction-and-conformance.md),
-[opportunity architecture](docs/architecture/automation-opportunity-identification.md),
-[simulation architecture](docs/architecture/intervention-design-and-simulation.md), and the
-[shadow architecture](docs/architecture/recommendation-shadow-mode.md). Decisions are recorded in
-[ADR 0007](docs/decisions/0007-counterfactual-simulation.md) and
-[ADR 0008](docs/decisions/0008-recommendation-shadow-mode.md), and
-[ADR 0010](docs/decisions/0010-source-contracts-and-shadow-v3.md).
-
-## Referral data foundation
-
-The version 1 operational model is intentionally small and excludes direct patient identifiers, diagnoses, clinical narrative, treatment decisions, risk scores, and clinical prioritisation.
-
-### Current entities
-
-- `referral_cases` stores one current, queryable projection for each process instance: stable internal and external identities, referral source, service line, lifecycle status, receipt and closure times, synthetic marker, schema version, and audit timestamps.
-- `referral_events` stores immutable recorded facts: case and source identities, event and ingestion times, operational activity, actor, source system, channel, manual-work flag, structured reason, bounded metadata, and schema version.
-- `synthetic_generation_runs` records generation configuration, status, counts, fingerprint, manifest, timestamps, and failure context for idempotent persistence.
-
-`event_at` is the source system's claim about when an activity happened. `ingested_at` is when WorkflowTwin accepted the fact. Keeping both allows later analysis to reconstruct event-time flow while retaining delayed and out-of-order arrivals and reproducing what was known at an ingestion watermark.
-
-Events are append-only in ordinary operation. Frozen domain contracts, SQLAlchemy mutation hooks, a PostgreSQL update/delete trigger, and `ON DELETE RESTRICT` protect audit history. `(source_system, external_event_id)` detects duplicate source facts. These controls are practical safeguards rather than cryptographic tamper evidence or protection from a database owner.
-
-Ten deterministic, fictional fixtures cover straight-through completion, one and repeated information loops, recategorisation and reassignment, scheduling failures, cancellation, rejection, inactivity, duplicate source identity, and delayed ingestion. They are compact evaluation cases for the next analytical stages, not the full synthetic dataset generator.
-
-See the [Northstar workflow](docs/architecture/northstar-referral-workflow.md), [metric definitions](docs/architecture/metric-definitions.md), and [event-model decision](docs/decisions/0002-event-data-model.md).
-
-## Synthetic data generator
-
-The generator produces coherent `ReferralCase` and `ReferralEvent` contracts from one explicitly seeded `random.Random` instance. UUID5 identifiers, case paths, timing, labels, and the SHA-256 operational-data fingerprint are stable for the same effective configuration and run identifier.
-
-Administrative timing follows configurable working hours and weekend handling. External information responses use elapsed time, while subsequent staff activity waits for the next working period. Background variation includes weekday volumes, source and service mixes, processing ranges, outcomes, repeated work, handoffs, and data latency.
-
-The default Northstar assumptions plant four detectable but probabilistic signals:
-
-| Segment | Intended signal |
-| --- | --- |
-| GP practice referrals | higher initial incompleteness, information waits, and manual touches |
-| Neurology | longer categorisation-to-team-assignment waiting time |
-| Respiratory | more failed scheduling attempts and longer booking time |
-| Dermatology reassignment path | more handoffs, rework, touches, and cycle time |
-
-Valid controlled defects include delayed and out-of-order ingestion, missing optional actor identifiers, unexpected valid channels, structurally valid source inconsistencies, and source retries. Duplicate-source attempts are labelled in ground truth but excluded from canonical events, preserving the database uniqueness constraint.
-
-Ground truth is exported separately and never added to operational event metadata. The machine-readable manifest distinguishes configured probabilities, realised counts and rates, planted signals, expected qualitative findings, and the stable dataset fingerprint. All output is fictional and must not be represented as evidence about real providers or clinical outcomes.
-
-Generate the small development preset:
+## Other commands
 
 ```bash
-uv run workflowtwin generate --preset tiny
+uv run workflowtwin --help
+uv run workflowtwin generate --preset demo --dataset-output artifacts/generation/demo.json
+uv run workflowtwin analyze --help
+uv run workflowtwin process-mine --help
+uv run workflowtwin identify-opportunities --help
+uv run workflowtwin simulate-intervention --help
+uv run workflowtwin shadow-run --dataset artifacts/generation/demo.json
+uv run workflowtwin pilot-run --reset
 ```
 
-Generate an independently loadable demonstration bundle:
+Historical refinement and holdout commands are not part of the product CLI.
+
+## Development
 
 ```bash
-uv run workflowtwin generate \
-  --preset demo \
-  --seed 42 \
-  --run-id northstar-demo-42 \
-  --dataset-output artifacts/generation/demo-dataset.json \
-  --validation-output artifacts/generation/demo-validation.json
-
-uv run workflowtwin validate \
-  --dataset artifacts/generation/demo-dataset.json \
-  --report-output artifacts/generation/demo-independent-validation.json
+uv run pytest --cov
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src tests alembic scripts
+uv lock --check
+docker compose config
+docker compose build api
 ```
 
-Persist a run after applying migrations:
+The current local suite passes 198 tests with 16 PostgreSQL-only skips and more than 90% branch
+coverage.
+The fixed 1,000-case analytical demo reconstructs 17 activities, 23 transitions, and 57 variants;
+strict/governed conformance rates are 36.3%/87.1%. See the focused
+[benchmarks](docs/architecture/pilot-benchmark.md) and existing architecture benchmark documents.
+
+Run PostgreSQL integration tests with a migrated disposable database:
 
 ```bash
+docker compose up -d db
 uv run alembic upgrade head
-uv run workflowtwin generate --preset demo --run-id northstar-demo-42 --persist
-```
-
-Replaying a completed run with the same fingerprint returns `already_completed`; using its identifier for different data fails. Cases and canonical events flush in configurable batches inside one transaction. A failure rolls back all operational rows and records the run as failed.
-
-Presets are `tiny` (30 cases), `demo` (1,000), and `full` (10,000). Generated files under `artifacts/generation/` are ignored and should not be committed. See the [generator architecture](docs/architecture/synthetic-data-generation.md) and [ADR 0003](docs/decisions/0003-deterministic-synthetic-generation.md).
-
-## Baseline analysis
-
-The analyzer builds immutable case timelines ordered by `(event_at, event_id)`, deduplicates source identities, and calculates metrics from event semantics. Case results retain units, exact/estimated/partial status, source event IDs, assumptions, warnings, and exclusion reasons. Cohorts cover referral source, service line, source system, assigned team when structured metadata is present, and terminal outcome.
-
-Supported measures include closed-case duration and cycle time, partial open-case age, business-hours waiting, a labelled manual-touch processing proxy, touches, internal handoffs, rework, first-pass completeness, completeness-check and booking times, assignment wait, scheduling failures, reassignments, stuck status, and ingestion quality. Missing boundaries remain unavailable or not applicable rather than becoming zero.
-
-Analyze an exported bundle and optionally evaluate findings against separate synthetic labels:
-
-```bash
-uv run workflowtwin analyze \
-  --dataset artifacts/generation/demo-dataset.json \
-  --manifest artifacts/generation/northstar-demo-42-manifest.json \
-  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json \
-  --report-output artifacts/analysis/demo-report.md \
-  --analysis-output artifacts/analysis/demo-analysis.json \
-  --case-metrics-output artifacts/analysis/demo-cases.jsonl
-```
-
-Analyze the same completed generation run from PostgreSQL:
-
-```bash
-uv run workflowtwin analyze \
-  --from-database \
-  --generation-run northstar-demo-42 \
-  --report-output artifacts/analysis/northstar-demo-42.md \
-  --analysis-output artifacts/analysis/northstar-demo-42.json
-```
-
-The primary JSON contains configuration, overall and cohort metrics, quality coverage, findings, optional benchmark evaluation, and a SHA-256 fingerprint that excludes wall-clock time and synthetic labels. Markdown is a concise stakeholder view; optional JSONL holds case results. Existing files are protected unless `--force` is supplied.
-
-Finding rules report only cohorts meeting the configured minimum size and use explicit absolute or relative materiality thresholds. They surface descriptive differences such as lower completeness or longer waits; they do not claim statistical significance and are not AI-generated recommendations. With the fixed demo seed, all four planted patterns are detected, with GP rework also appearing as an expected overlapping effect.
-
-See the [analysis architecture](docs/architecture/operational-metrics-analysis.md), [metric definitions](docs/architecture/metric-definitions.md), and [ADR 0004](docs/decisions/0004-operational-metrics.md).
-Local tiny, demo, and 10,000-case measurements are recorded in the [baseline benchmark](docs/architecture/baseline-analysis-benchmark.md).
-
-## Process reconstruction and conformance
-
-WorkflowTwin maps all 18 version 1 referral event types to stable administrative activities and
-builds canonical traces ordered by `(event_at, event_id)`. Source retries are deduplicated, genuine
-repeats remain visible, and ingestion order is retained only as quality evidence. Owned statistics
-cover activities, start/end states, transitions, elapsed and business-time delay, variants, loops,
-manual-work context, handoffs, complexity, deviations, and candidate bottlenecks.
-
-The isolated PM4Py 2.7.23.2 adapter verifies a directly-follows graph, discovers one structured
-model with Inductive Miner, and performs token-based replay against two versioned Petri nets:
-
-- `northstar-strict-v1`: the nine-step successful path from submission to completion.
-- `northstar-governed-v1`: documented information loops, limited rerouting, scheduling retries,
-  cancellation, rejection, non-response, completion, and other administrative closure.
-
-Governed conformance does not imply speed, quality, or desirability. Non-conformance can represent
-missing data, a legitimate exception, or reference-model scope rather than an operational error.
-Candidate bottlenecks describe observed associations and always require human investigation.
-
-Run process analysis on an exported dataset:
-
-```bash
-uv run workflowtwin process-mine \
-  --dataset artifacts/generation/demo-dataset.json \
-  --manifest artifacts/generation/northstar-demo-42-manifest.json \
-  --baseline-analysis artifacts/analysis/demo-analysis.json \
-  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json \
-  --analysis-output artifacts/process/demo-process-analysis.json \
-  --report-output artifacts/process/demo-process-report.md \
-  --graph-output artifacts/process/demo-process-graph.json \
-  --case-output artifacts/process/demo-process-cases.jsonl \
-  --visualisation-directory artifacts/process/demo-visualisations
-```
-
-Use `--from-database --generation-run northstar-demo-42` for a completed persisted run. Existing
-outputs are protected unless `--force` is supplied. SVG generation is optional and reports a
-warning if Graphviz is unavailable; core JSON and Markdown analysis remains valid.
-
-For the fixed 1,000-case seed, process mining reconstructs 17 activities, 23 transitions, and 57
-variants. Strict/governed fully conforming rates are 36.3%/87.1%, and all four planted patterns are
-detected after discovery. See the
-[process benchmark](docs/architecture/process-mining-benchmark.md) for demo and 10,000-case results.
-
-## Evidence-backed automation opportunities
-
-WorkflowTwin combines the baseline and process artifacts with a versioned, explicitly fictional
-research pack. It validates artifact lineage, creates stable evidence references, preserves
-contradictory user evidence, and applies six transparent administrative candidate rules. Seven
-archetypes define eligibility, oversight, success measures, known failure modes, and safety limits.
-
-Each candidate reports observed burden, eligibility, value, readiness, risk, confidence, evidence
-gaps, assumptions, controls, and future success metrics separately. Clinical judgement, treatment,
-clinical prioritisation, prohibited data use, and governance failures are hard exclusions outside the
-weighted priority score. Addressable burden is only an upper bound; expected benefit remains
-unavailable until a later intervention and counterfactual milestone.
-
-Run opportunity identification after producing compatible baseline and process artifacts:
-
-```bash
-uv run workflowtwin identify-opportunities \
-  --baseline-analysis artifacts/analysis/demo-analysis.json \
-  --process-analysis artifacts/process/demo-process-analysis.json \
-  --research-pack data/research/northstar-research-v1.json \
-  --manifest artifacts/generation/northstar-demo-42-manifest.json \
-  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json
-```
-
-The command writes full analysis JSON, stakeholder Markdown, compact portfolio JSON, and an
-evidence-network dataset under `artifacts/opportunities/`. Existing files are protected unless
-`--force` is supplied. Ground truth is optional and is consulted only after the portfolio exists.
-
-On the fixed demo, seven raw candidates become six after stable deduplication: one is eligible only
-for a controlled prototype and five need further discovery. All four planted administrative
-patterns are detected, while two additional quality-monitoring candidates remain visible. See the
-[opportunity architecture](docs/architecture/automation-opportunity-identification.md),
-[ADR 0006](docs/decisions/0006-opportunity-identification.md), and
-[local benchmark](docs/architecture/opportunity-identification-benchmark.md).
-
-## Controlled counterfactual simulation
-
-WorkflowTwin converts the sole fixed-demo controlled-prototype opportunity into a versioned,
-recommendation-only structured completeness intervention. It evaluates GP-practice cases at referral
-receipt, models detector errors and delayed administrator review, and creates a separate event overlay
-only after simulated approval. Source events remain unchanged. False positives, rejections, timeouts,
-service failures, fallback, and rollback remain visible and add control burden.
-
-Run the central fixed-demo scenario:
-
-```bash
-uv run workflowtwin simulate-intervention \
-  --dataset artifacts/generation/demo-dataset.json \
-  --manifest artifacts/generation/northstar-demo-42-manifest.json \
-  --baseline-analysis artifacts/analysis/demo-analysis.json \
-  --process-analysis artifacts/process/demo-process-analysis.json \
-  --opportunity-analysis artifacts/opportunities/demo-opportunities.json \
-  --ground-truth artifacts/generation/northstar-demo-42-ground-truth.json \
-  --scenario central
-```
-
-The command writes analysis JSON, stakeholder Markdown, visualisation-ready comparison JSON, and
-optional case JSONL. It supports a completed PostgreSQL generation run with `--from-database` and
-`--generation-run RUN_ID`; simulated events are never written to operational tables.
-
-The fixed central scenario models fewer manual touches and a faster first completeness check, but
-control overhead leaves net burden slightly negative. Conservative and adverse scenarios are more
-negative; only the optimistic scenario is positive. The central decision is therefore **proceed only
-with additional controls** for a future shadow-mode study, not deployment approval. See the
-[simulation architecture](docs/architecture/intervention-design-and-simulation.md),
-[ADR 0007](docs/decisions/0007-counterfactual-simulation.md), and
-[benchmark](docs/architecture/intervention-simulation-benchmark.md).
-
-## Recommendation-only shadow mode
-
-The next evidence step is deliberately narrower than the simulated intervention. WorkflowTwin
-replays separate, versioned fictional intake snapshots in source-availability order and recommends a
-human administrative completeness review only when current structured evidence names a concrete
-concern. GP-practice membership alone cannot trigger. Unknown or unsupported required evidence causes
-abstention, and later structured corrections can retract a recommendation.
-
-Detector inputs contain no operational future events, hidden labels, outcomes, reviews, clinical
-fields, protected attributes, or free text. Hidden timing-aware labels and the deterministic fictional
-benchmark reviewer live behind an evaluation-only oracle boundary. Recommendations never update
-referral cases or events, change status or routing, reject or approve a case, or communicate
-externally.
-
-Generate separate intake and label artefacts when creating a bundle:
-
-```bash
-uv run workflowtwin generate \
-  --preset demo \
-  --seed 42 \
-  --run-id northstar-demo-42 \
-  --dataset-output artifacts/generation/demo-dataset.json \
-  --intake-snapshots-output artifacts/generation/demo-intake-snapshots.jsonl \
-  --shadow-labels-output artifacts/generation/demo-shadow-labels.jsonl
-```
-
-Run, review, and evaluate shadow outputs as separate stages:
-
-```bash
-uv run workflowtwin shadow-run \
-  --dataset artifacts/generation/demo-dataset.json \
-  --manifest artifacts/generation/northstar-demo-42-manifest.json \
-  --intake-snapshots artifacts/generation/demo-intake-snapshots.jsonl \
-  --opportunity-analysis artifacts/opportunities/demo-opportunities.json \
-  --simulation-analysis artifacts/simulation/demo-central.json
-
-uv run workflowtwin shadow-review \
-  --run artifacts/shadow/northstar-demo-shadow-v1-strict-run.json \
-  --recommendations artifacts/shadow/northstar-demo-shadow-v1-strict-recommendations.jsonl \
-  --benchmark-labels artifacts/generation/demo-shadow-labels.jsonl \
-  --validated-reviews-output artifacts/shadow/demo-reviews.jsonl
-
-uv run workflowtwin shadow-evaluate \
-  --run artifacts/shadow/northstar-demo-shadow-v1-strict-run.json \
-  --recommendations artifacts/shadow/northstar-demo-shadow-v1-strict-recommendations.jsonl \
-  --reviews artifacts/shadow/demo-reviews.jsonl \
-  --audit artifacts/shadow/northstar-demo-shadow-v1-strict-audit.jsonl \
-  --intake-snapshots artifacts/generation/demo-intake-snapshots.jsonl \
-  --evaluation-labels artifacts/generation/demo-shadow-labels.jsonl \
-  --evaluation-output artifacts/shadow/demo-evaluation.json \
-  --report-output artifacts/shadow/demo-report.md \
-  --visualisation-output artifacts/shadow/demo-visualisation.json
-```
-
-On the fixed 1,000-case replay, strict mode produced 224 recommendations at 92.86% precision,
-83.20% recall, and 1.153 fictional false-positive review hours. Balanced and exploratory increased
-coverage but reduced precision and increased burden. Strict passed safety, audit, precision,
-false-positive burden, rejection, completion, and latency gates but exceeded the 20% recommendation
-capacity threshold at 22.4%. The 10,000-case strict run repeated that result at 94.21% precision and
-20.72% coverage. The deterministic assessment is therefore **pause due to stop condition**, requiring
-detector revision rather than a pilot.
-
-See the [shadow architecture](docs/architecture/recommendation-shadow-mode.md),
-[ADR 0008](docs/decisions/0008-recommendation-shadow-mode.md), and
-[benchmark](docs/architecture/shadow-mode-benchmark.md). All reported review time and cost are
-fictional capacity proxies. Promotion readiness would not authorise production or autonomous action,
-and no clinical or real-world impact conclusion can be drawn.
-
-### Versioned detector refinement
-
-The original strict detector is frozen as `strict-v1`. A separately fingerprinted `strict-v2`
-confirms explicit document absence after a 120-minute logical window, then passes confirmed signals
-to explainable priority and fictional reviewer-capacity controls. Detector positives remain distinct
-from active, surfaced, reviewed, deferred, and observe-only recommendations, so capacity cannot be
-mistaken for better detector quality.
-
-```bash
-uv run workflowtwin shadow-refine --force  # development and validation only
-uv run workflowtwin shadow-holdout         # locked 10,000-case split, once
-```
-
-The pre-registered development and validation result is `do_not_promote`: confirmation reduces
-volume and false-positive review time but breaches the recall gate and adds 120 minutes of latency.
-The untouched 10,000-case holdout confirmed that decision: `strict-v2` produced 1,686 positives at
-93.12% precision and 51.19% recall, versus 2,048 positives at 93.02% precision and 62.11% recall for
-`strict-v1`. WorkflowTwin therefore remains recommendation-only shadow software. See the
-[refinement architecture](docs/architecture/shadow-detector-refinement.md) and
-[ADR 0009](docs/decisions/0009-shadow-detector-refinement.md). Detailed results and the transparent
-capacity-denominator correction are in the
-[refinement benchmark](docs/architecture/shadow-refinement-benchmark.md).
-
-### Source-contract analysis and strict-v3
-
-The failed `strict-v2` recall result triggered an information-availability investigation, not more
-threshold tuning. `IncomingReferralSnapshotV2` represents administrative fields as explicit
-`present`, `absent`, `unknown`, `not_applicable`, `pending_source_update`, `unsupported`, `stale`,
-`conflicting`, or `verification_required` states. It records applicability, producer, event and
-availability timestamps, form and source versions, freshness, conflicts, warnings, manual-review
-state, supersession, and provenance. Generator-only administrative truth remains in a separate file
-and cannot enter detector interfaces. Clinical and identifying fields are prohibited.
-
-On the 3,000-case historical validation replay, V2 made 728 of 901 hidden positives explicitly
-observable within the useful window, an 80.80% evaluation-only recall ceiling. Ceilings were 82.00%
-for manual entry, 81.46% for the referral portal, and 78.69% for secure email; they were 87.21% for
-`NS-INTAKE-1`, 83.40% for `NS-INTAKE-2`, and 0% for unknown forms. This meaningful recoverable signal
-justified a separately registered `strict-v3`; it does not establish production source quality.
-
-`strict-v3` recommends only on trusted explicit administrative absence or verification-required
-states under a matching requirements contract. It abstains on unknown, stale, conflicting, and
-unsupported evidence; observes rather than duplicates an existing warning or manual review; and
-retracts after a superseding resolution. It has no operational writer and uses no LLM or learned
-model.
-
-```bash
-uv run workflowtwin shadow-analyse-misses --force
-uv run workflowtwin source-contract-validate --force
-uv run workflowtwin source-contract-build \
-  --dataset artifacts/generation/demo-dataset.json \
-  --snapshots-output artifacts/source-contract/demo-snapshots-v2.jsonl \
-  --truth-output artifacts/source-contract/demo-generator-truth.json \
-  --validation-output artifacts/source-contract/demo-validation.json
-uv run workflowtwin shadow-v3-develop --force
-uv run workflowtwin shadow-v3-validate --force
-```
-
-Development C passed its gates; Development D narrowly exceeded the 25% detector-positive cap at
-25.40%. The frozen Validation V3 configuration produced 775 detector positives across 3,000 cases,
-with 93.16% precision, 78.39% recall, 3.53 fictional false-positive review hours, 0.25 minutes mean
-latency, 25.83% detector coverage, and 14.87% surfaced coverage. It achieved 100% of its measured
-78.39% observable ceiling, but the coverage gate failed. The final assessment is
-`strict_v3_validation_failed`: no lock was created and holdout V3 seed 808 was not generated,
-labelled, inspected, or evaluated. WorkflowTwin remains recommendation-only shadow software.
-
-See the [source-contract architecture and report](docs/architecture/source-contract-and-shadow-v3.md)
-and [ADR 0010](docs/decisions/0010-source-contracts-and-shadow-v3.md). Cross-version development and
-validation comparisons are controlled; the old V1/V2 holdout is a different population and is not
-an exact causal comparator.
-
-## Metrics roadmap
-
-Operational metrics will be defined with explicit timestamps, populations, and units:
-
-| Area | Metrics |
-| --- | --- |
-| Flow | end-to-end cycle time, active processing time, waiting time, throughput |
-| Friction | rework loops, repeat activity rate, manual touches, handoff count |
-| Reliability | stuck-case rate, automation failure rate, human override rate |
-| Adoption | eligible cases, automation acceptance, usage, completion rate |
-| Impact | staff time avoided, cost per referral, capacity released, estimated savings |
-
-Clinical outcomes and treatment quality are outside the product's decision scope. Simulated improvements will be labelled as estimates and kept distinct from observed production performance.
-
-## Roadmap
-
-1. **Foundation (completed):** API skeleton, settings, structured logging, testing, PostgreSQL containers, migration tooling, documentation, and quality gates.
-2. **Referral event model (completed):** versioned contracts, explicit vocabulary, UTC timestamps, append-only PostgreSQL persistence, first migration, metric semantics, and ten deterministic fixtures.
-3. **Synthetic dataset (completed):** seeded configuration, business-time generation, planted bottlenecks, controlled defects, separate ground truth, manifests, validation, CLI presets, and idempotent batch persistence.
-4. **Operational metrics and baseline analysis (completed):** deterministic timelines and metrics, cohort summaries, quality coverage, material findings, synthetic benchmark evaluation, reproducible reports, and file/database CLI analysis.
-5. **Process intelligence (completed):** reconstruct DFGs and structured models, identify stable variants and loops, compare strict/governed conformance, reconcile baseline evidence, and export process artefacts.
-6. **Evidence-backed automation opportunities (completed):** link baseline, process, quality, and fictional research evidence; preserve contradictions; apply hard safety gates; rank bounded administrative opportunities; and export an auditable portfolio without recommending, automating, or simulating.
-7. **Controlled intervention simulation (completed):** select the eligible completeness opportunity, define a guarded policy, model human review and failure paths, create immutable event overlays, rerun baseline/process analysis, compare four scenarios, test sensitivity, and decide shadow-mode suitability.
-8. **Shadow-mode intervention prototype (completed):** replay ingestion-ordered structured snapshots; generate recommendation-only outputs; validate fictional reviews; measure precision, recall, abstention, false-positive burden, latency, audit and policy quality; and enforce stop conditions and promotion gates.
-9. **Detector revision and continued shadow evaluation (completed, not promoted):** freeze `strict-v1`; compare fingerprinted `strict-v2` on registered splits; separate detector quality from fictional capacity; report missed positives, cohorts, chronology, Pareto trade-offs, and sensitivity; remain in recommendation-only shadow mode because recall fails the gate.
-10. **Source-contract analysis and strict-v3 (completed, validation failed):** classify misses, model explicit V2 administrative source states and requirements, calculate observability ceilings, pre-register new splits, and stop before holdout because detector coverage failed validation.
-11. **Source reliability remediation:** investigate producer-side unavailable, unknown, stale, conflicting, and unsupported states; improve synthetic contract tests without tuning a detector or opening holdout V3.
-12. **Decision interface:** build a focused React view for exploring flows, evidence, assumptions, and observed-versus-simulated results.
-13. **Safe automation pilot:** blocked unless a future separately versioned detector passes every mandatory validation and untouched-holdout gate.
-14. **Evaluation and observability:** instrument traces and provider calls, measure quality and adoption, monitor observed variation and failure modes, and report realised business impact only when it exists.
-
-## Repository layout
-
-```text
-apps/                       deployable application notes and future web app
-docs/architecture/          system design documentation
-docs/decisions/             architecture decision records
-src/workflowtwin/           Python application package
-tests/                      automated tests
-alembic/                    database migrations
-Dockerfile                  API image
-docker-compose.yml          local API and PostgreSQL stack
-pyproject.toml              dependencies and quality-tool configuration
-```
-
-## Getting started
-
-Prerequisites: Python 3.12 and either `uv` or standard `pip`. Docker is optional.
-
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-cp .env.example .env
-uvicorn workflowtwin.main:app --reload
-```
-
-The API is available at `http://localhost:8000`, with interactive documentation at `http://localhost:8000/docs`.
-
-Run the quality gates:
-
-```bash
-pytest --cov
-ruff check .
-ruff format --check .
-mypy src tests alembic scripts
-```
-
-Or run the local stack:
-
-```bash
-docker compose up --build
-```
-
-PostgreSQL is reachable from the host on `POSTGRES_PORT` (default `5432`); the API waits for its health check and starts on port `8000`. Development credentials in Compose are local defaults and must not be used in deployed environments.
-
-Apply or inspect database migrations:
-
-```bash
-uv run alembic upgrade head
-uv run alembic current
-```
-
-PostgreSQL integration tests are opt-in so the normal unit suite remains self-contained. Point them at an isolated, migrated database:
-
-```bash
 WORKFLOWTWIN_TEST_DATABASE_URL=postgresql+asyncpg://workflowtwin:workflowtwin@localhost:5432/workflowtwin \
   uv run pytest -m postgres
 ```
 
-## API foundation
+## Limitations
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/` | service identity and documentation link |
-| `GET` | `/health` | liveness status and service metadata |
+- All results are synthetic and specific to the fictional Northstar assumptions.
+- The pilot store is process-local and resets when the API restarts.
+- Reviewer identity is a validated role string, not authenticated identity.
+- The demo has no frontend, deployment, telemetry, live integrations, email, or message delivery.
+- Counterfactual results describe assumptions, not observed causal impact.
+- No LLM or agent framework is used; deterministic rules are appropriate for this milestone.
 
-The health endpoint is intentionally a liveness check in this release. Database readiness will be added when the application first depends on database access.
-
-## Safety and evidence
-
-WorkflowTwin analyses administrative workflow performance. Future automation recommendations must be explainable, auditable, reversible where practical, and subject to human approval when risk requires it. Patient-facing or clinical decisions are not delegated to this system. No result derived from fictional or synthetic Northstar Clinics data should be represented as evidence about a real provider or real clinical outcomes.
-
-PM4Py's community distribution is licensed under AGPL-3.0. This portfolio uses it through an
-isolated adapter; any commercial distribution or network deployment must complete an appropriate
-license review and obtain a commercial license where required.
+The final productisation milestone is the recruiter-facing React/TypeScript frontend, deployment of
+this fictional demo, stronger visual presentation, observability, and a concise portfolio walkthrough.

@@ -1,0 +1,47 @@
+{
+  "assessment": "ready_for_fictional_pilot_demo",
+  "detector": {
+    "derived_from": "strict-v3",
+    "original_detector_fingerprint": "1e8c75cfea53f1dc449250d5a53974b7fef4a633bd5cd2110f133fc209923bda",
+    "product_name": "completeness-review-detector-v1",
+    "recommendation_only": true,
+    "requirements_contract_fingerprint": "45055eaf3cbdc0a65cab7d81c39dac103a75c16581ea131c946944897590d6d5",
+    "requirements_contract_version": "northstar-requirements-v2",
+    "source_contract_fingerprint": "2e1518711bb463056f004194642580e98b454f9e717f6f46a11ea230cd463cc8",
+    "source_contract_version": "northstar-source-contract-v2",
+    "supported_detector_fingerprint": "05eb5d10658ff6036602ff36a35107fd0e6ce5e7db51f6cfc209c33bb53c9df1"
+  },
+  "fictional": true,
+  "metrics": {
+    "detector_positive_coverage": 0.24166666666666667,
+    "drafts_created": 12,
+    "drafts_reviewed": 3,
+    "fictional_tasks_committed": 2,
+    "rollbacks": 1,
+    "surfaced_recommendation_coverage": 0.1
+  },
+  "no_message_sent": true,
+  "policy_version": "northstar-fictional-pilot-policy-v1",
+  "recommendations": [
+    {
+      "draft_id": "pilot-draft-faf614f3951b5d39",
+      "missing_field_ids": ["supporting_document"],
+      "recommendation_id": "pilot-recommendation-a383706cb2a88576",
+      "status": "draft_rolled_back"
+    },
+    {
+      "draft_id": "pilot-draft-cd36dccd965787f0",
+      "missing_field_ids": ["supporting_document"],
+      "recommendation_id": "pilot-recommendation-845dfd4bde9bc3d7",
+      "status": "draft_rejected"
+    },
+    {
+      "draft_id": "pilot-draft-7ccdcabbe53fb4c1",
+      "missing_field_ids": ["supporting_document"],
+      "recommendation_id": "pilot-recommendation-9f336940151ca4d5",
+      "status": "draft_committed_to_fictional_task_queue"
+    }
+  ],
+  "run_id": "northstar-fictional-pilot-demo-v1",
+  "seed_version": "northstar-pilot-ui-seed-v1"
+}

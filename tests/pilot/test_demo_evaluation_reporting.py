@@ -56,3 +56,20 @@ def test_pilot_artifacts_are_small_explicit_and_protected(tmp_path: Path) -> Non
     assert render_pilot_report(run) == report
     with pytest.raises(FileExistsError, match="--reset"):
         write_pilot_artifacts(run, output)
+
+
+def test_compact_ui_seed_matches_supported_demo() -> None:
+    seed = json.loads(
+        Path("data/demo/northstar-pilot-ui-seed-v1.json").read_text(encoding="utf-8")
+    )
+    run, _ = build_demo_pilot()
+    assert seed["fictional"] is True
+    assert seed["run_id"] == run.run_id
+    assert seed["detector"] == run.supported_detector_metadata
+    assert seed["metrics"]["surfaced_recommendation_coverage"] == (
+        run.metrics.surfaced_recommendation_coverage
+    )
+    assert [item["recommendation_id"] for item in seed["recommendations"]] == [
+        item.recommendation_id for item in run.recommendations[:3]
+    ]
+    assert seed["no_message_sent"] is True
