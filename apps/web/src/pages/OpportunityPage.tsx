@@ -29,6 +29,5 @@ export function OpportunityPage() {
 
 function Score({ label, value, inverse = false }: { label: string; value: number; inverse?: boolean }) {
   const tone = inverse ? value <= 40 : value >= 60;
-  return <div className="score"><span>{label}</span><strong>{value.toFixed(1)}</strong><div aria-label={`${label}: ${value.toFixed(1)} out of 100`}><i style={{ width: `${value}%` }} className={tone ? "score__good" : "score__caution"} /></div></div>;
+  return <div className="score"><span>{label}</span><strong>{value.toFixed(1)}</strong><div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}><i style={{ width: `${value}%` }} className={tone ? "score__good" : "score__caution"} /></div></div>;
 }
-

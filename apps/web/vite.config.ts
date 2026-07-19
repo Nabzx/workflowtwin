@@ -7,14 +7,15 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     proxy: {
-      "/api": "http://127.0.0.1:8000",
-      "/health": "http://127.0.0.1:8000",
-      "/ready": "http://127.0.0.1:8000",
+      "/api": process.env.VITE_PROXY_TARGET ?? "http://127.0.0.1:8000",
+      "/health": process.env.VITE_PROXY_TARGET ?? "http://127.0.0.1:8000",
+      "/ready": process.env.VITE_PROXY_TARGET ?? "http://127.0.0.1:8000",
     },
   },
   test: {
     environment: "jsdom",
     setupFiles: "./tests/setup.ts",
     css: true,
+    exclude: ["e2e/**", "node_modules/**"],
   },
 });

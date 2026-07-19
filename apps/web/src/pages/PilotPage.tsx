@@ -55,7 +55,7 @@ export function PilotPage() {
 function AuthorityPanel() {
   const can = ["Read explicit administrative field state", "Recommend a completeness review", "Prepare bounded deterministic text", "Create a reversible fictional local task after approval"];
   const cannot = ["Send a message", "Change a referral status", "Infer missing clinical information", "Make a clinical or priority decision"];
-  return <aside className="authority-panel"><div><Shield aria-hidden="true" /><div><p className="eyebrow">Persistent authority boundary</p><h2>Human approval is the control point</h2></div></div><div><h3><CheckCircle2 />System may</h3><ul>{can.map((item) => <li key={item}>{item}</li>)}</ul></div><div><h3><Ban />System cannot</h3><ul>{cannot.map((item) => <li key={item}>{item}</li>)}</ul></div></aside>;
+  return <aside aria-label="Automation authority boundary" className="authority-panel"><div><Shield aria-hidden="true" /><div><p className="eyebrow">Persistent authority boundary</p><h2>Human approval is the control point</h2></div></div><div><h3><CheckCircle2 />System may</h3><ul>{can.map((item) => <li key={item}>{item}</li>)}</ul></div><div><h3><Ban />System cannot</h3><ul>{cannot.map((item) => <li key={item}>{item}</li>)}</ul></div></aside>;
 }
 
 function RecommendationRow({ recommendation, draft, selected, onClick }: { recommendation: Recommendation; draft?: Draft; selected: boolean; onClick: () => void }) {
