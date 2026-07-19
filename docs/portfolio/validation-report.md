@@ -55,11 +55,12 @@ responsive screenshots provide the checked browser evidence.
 ## Public release
 
 - Product: <https://workflowtwin.vercel.app>
-- API documentation: <https://workflowtwin.vercel.app/docs>
-- Health: <https://workflowtwin.vercel.app/health>
+- API documentation: <https://workflowtwin-api.vercel.app/docs>
+- Health: <https://workflowtwin-api.vercel.app/health>
 - Reported release version: `1.0.0`
 
-The public deployment uses ephemeral serverless process memory. The API accepts
+The public frontend is a static Vite deployment and the separate API uses ephemeral
+serverless process memory. The API accepts
 bounded, validated revision and action replay data so the fictional multi-step review
 journey survives execution on a fresh instance, while identifiers and idempotency
 checks remain enforced. This is a portfolio deployment compromise, not the proposed

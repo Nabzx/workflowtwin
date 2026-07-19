@@ -35,10 +35,11 @@ Observability will use structured application logs, request identifiers, timings
 health/readiness routes, and a safe system-status response. A commercial telemetry
 service is unnecessary for this portfolio deployment.
 
-Deployment will be intentionally simple: one production container can serve the
-compiled frontend and FastAPI API, while local Compose retains separate frontend,
-API, and PostgreSQL services. Prepared evidence is immutable; shared pilot state is
-ephemeral and resettable.
+Deployment will preserve the application boundary: Vercel hosts the static Vite
+frontend and FastAPI API as separate projects, while one production container can
+still serve both applications. Local Compose retains separate frontend, API, and
+PostgreSQL services. Prepared evidence is immutable; shared pilot state is ephemeral
+and resettable.
 
 Backend feature development stops after the read API, reset safety, and lightweight
 observability needed to present the completed product.
@@ -65,5 +66,5 @@ observability needed to present the completed product.
 - **A global state framework:** duplicates TanStack Query and component state.
 - **Directly serving large research artefacts:** leaks internal detail and creates an
   unstable, slow public contract.
-- **Separate hosted frontend and API:** valid, but adds cross-origin and two-service
-  operational overhead without improving this demonstration.
+- **One hosted frontend and API function:** initially simpler, but a catch-all function
+  rewrite obscures the product entry point and couples SPA routing to backend routing.

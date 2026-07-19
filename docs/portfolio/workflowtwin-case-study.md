@@ -155,8 +155,9 @@ and unsaved form input.
 FastAPI exposes versioned, typed, compact demo contracts and reuses pilot mutation endpoints. The
 application includes structured request logs, request identifiers, duration and status, readiness,
 and a non-sensitive system-status endpoint. Docker Compose runs PostgreSQL, FastAPI, and an
-Nginx-served production SPA. A unified image supports container deployment; the public Vercel build
-serves the SPA and API on one origin.
+Nginx-served production SPA. A unified image supports container deployment; the public Vercel setup
+deploys `apps/web` as a static Vite project and FastAPI as a separate backend project with an
+explicit CORS allowlist.
 
 Vercel functions can recycle between calls. To keep the public demonstration safe, approval and
 rollback accept only bounded fictional replay data and verify deterministic revision, action,

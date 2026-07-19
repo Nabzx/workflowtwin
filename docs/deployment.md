@@ -1,26 +1,37 @@
 # Deployment
 
-WorkflowTwin is packaged as one public web service for the portfolio demonstration. The
-multi-stage `Dockerfile.deploy` builds the React application, installs the Python service, and
-serves both from FastAPI on one origin. This avoids CORS configuration drift and keeps the
-fictional pilot state in the same process as its API.
+WorkflowTwin uses two public Vercel projects. The product project has `apps/web` as its root
+directory and deploys a static Vite application. The API project deploys FastAPI separately from
+the repository root. This keeps frontend routing independent from API routing and prevents the
+product URL from being captured by the Python function.
 
-The verified portfolio deployment uses Vercel's Python runtime because its CLI can deploy the
-local release without changing Git history or pushing the repository. `vercel.json` builds the
-SPA and routes every request to one FastAPI function. The function serves client routes and API
-routes from the same origin. A Render Docker blueprint remains available for an owner-managed
-container deployment after the release is pushed.
+The multi-stage `Dockerfile.deploy` still provides a supported single-service container option for
+environments where serving both applications from FastAPI is useful. A Render Docker blueprint
+remains available for that owner-managed deployment model.
 
 - Product and frontend: <https://workflowtwin.vercel.app>
-- API and OpenAPI: <https://workflowtwin.vercel.app/docs>
-- Health: <https://workflowtwin.vercel.app/health>
+- API and OpenAPI: <https://workflowtwin-api.vercel.app/docs>
+- API health: <https://workflowtwin-api.vercel.app/health>
 
 ## Vercel deployment
 
-`pyproject.toml` declares the ASGI entry point. Configure
-`WORKFLOWTWIN_WEB_DIST_PATH=apps/web/dist` and `WORKFLOWTWIN_ENVIRONMENT=production` in the
-Vercel project, then deploy with `vercel deploy --prod`. Do not configure a reset token in any
-client-visible environment variable.
+Configure the `workflowtwin` frontend project with:
+
+- Root Directory: `apps/web`
+- Framework Preset: Vite
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- `VITE_API_BASE_URL`: `https://workflowtwin-api.vercel.app`
+
+`apps/web/vercel.json` records the build contract and rewrites all browser routes to `index.html`,
+allowing React Router routes to load directly and survive refreshes. Deploy from the repository root
+with `vercel deploy --prod` after linking the `workflowtwin` project.
+
+The `workflowtwin-api` project retains the FastAPI root deployment. Configure
+`WORKFLOWTWIN_ENVIRONMENT=production` and
+`WORKFLOWTWIN_CORS_ORIGINS=https://workflowtwin.vercel.app`; do not configure a reset token in any
+client-visible environment variable. API documentation belongs to this backend project, not the
+frontend domain.
 
 The deployed Python function is approximately 431 MB uncompressed, below Vercel's current 500 MB
 limit but close enough to constrain future dependency growth. Production verification covers the
@@ -43,8 +54,9 @@ local and validation stack.
 | --- | --- | --- |
 | `PORT` | Set by Render | Public HTTP listener |
 | `WORKFLOWTWIN_ENVIRONMENT` | Yes | Set to `production` |
-| `WORKFLOWTWIN_WEB_DIST_PATH` | Image default | Built SPA directory |
+| `WORKFLOWTWIN_CORS_ORIGINS` | API deployment | Allowed frontend origin |
 | `WORKFLOWTWIN_DEMO_RESET_TOKEN` | No | Enables token-protected HTTP reset when set |
+| `VITE_API_BASE_URL` | Frontend deployment | Public origin of the separate FastAPI project |
 
 Do not expose the reset token through a `VITE_` variable. Public deployments should leave reset
 disabled unless an operator needs it. A process restart always restores the deterministic pilot.
@@ -54,8 +66,8 @@ disabled unless an operator needs it. A process restart always restores the dete
 Render free web services sleep after 15 minutes without traffic and can take about one minute to
 wake. Their filesystem is ephemeral. This is acceptable because WorkflowTwin does not rely on
 runtime files for public state: restarting restores the same fictional dataset and guarded pilot.
-The shared in-memory state is intentionally not production multi-user infrastructure. Vercel can
-recycle or run more than one function instance, so state can reset between requests. Approval and
+The shared in-memory API state is intentionally not production multi-user infrastructure. Vercel
+can recycle or run more than one function instance, so state can reset between requests. Approval and
 rollback requests carry only bounded fictional state needed to replay and verify deterministic
 identifiers atomically when a fresh instance handles the request. The pilot is best viewed as a
 short demonstration flow; audit views can return to their prepared state after instance recycling.
@@ -73,5 +85,7 @@ docker run --rm -p 10000:10000 \
 curl --fail http://localhost:10000/ready
 ```
 
-Verify `/`, `/workflow`, `/api/v1/demo/overview`, `/api/v1/pilot/summary`, `/docs`, and the
-human-approved rollback flow before announcing a deployment URL.
+Verify the container's `/`, `/workflow`, `/api/v1/demo/overview`, `/api/v1/pilot/summary`, `/docs`,
+and human-approved rollback flow before announcing a unified container deployment URL. For Vercel,
+verify every frontend route on `workflowtwin.vercel.app` and API health and docs on
+`workflowtwin-api.vercel.app` independently.

@@ -95,8 +95,9 @@ visible in the product.
 
 ## How would you deploy this safely?
 
-The portfolio deployment uses one origin, fictional data, no send capability, bounded validation,
-and disabled anonymous reset. A production deployment would use an authenticated container service,
+The portfolio deployment uses separate static frontend and FastAPI origins, an explicit CORS
+allowlist, fictional data, no send capability, bounded validation, and disabled anonymous reset.
+A production deployment would use an authenticated container service,
 durable PostgreSQL transactions, secrets management, rate limits, audit export, alerting, backups,
 least-privilege network access, and controlled release gates. External actions would require a new
 threat model and customer approval.

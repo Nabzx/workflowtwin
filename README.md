@@ -4,7 +4,7 @@
 and test them safely before deployment.**
 
 [Open the live fictional demo](https://workflowtwin.vercel.app) ·
-[API documentation](https://workflowtwin.vercel.app/docs) ·
+[API documentation](https://workflowtwin-api.vercel.app/docs) ·
 [Portfolio case study](docs/portfolio/workflowtwin-case-study.md) ·
 [3-minute demo script](docs/portfolio/demo-script.md)
 
@@ -214,12 +214,14 @@ failure-recovery, and end-to-end workflow coverage. See the final validation rep
 
 ## Deployment
 
-The verified demo is deployed from `vercel.json` at
-[workflowtwin.vercel.app](https://workflowtwin.vercel.app). A multi-stage `Dockerfile.deploy` and
-`render.yaml` provide a unified container alternative. The public runtime is ephemeral, may cold
-start, and is not multi-user infrastructure. Bounded revision/action replay verifies deterministic
-identifiers across recycled function instances. Anonymous reset is disabled; local reset remains
-available and a configured token can enable operator reset.
+The React product is deployed from `apps/web` at
+[workflowtwin.vercel.app](https://workflowtwin.vercel.app). Its Vite build uses
+`VITE_API_BASE_URL=https://workflowtwin-api.vercel.app` to call the separately deployed
+[FastAPI backend](https://workflowtwin-api.vercel.app/docs). A multi-stage `Dockerfile.deploy` and
+`render.yaml` remain available as a unified container alternative. The public API runtime is
+ephemeral, may cold start, and is not multi-user infrastructure. Bounded revision/action replay
+verifies deterministic identifiers across recycled function instances. Anonymous reset is
+disabled; local reset remains available and a configured token can enable operator reset.
 
 See [deployment details](docs/deployment.md).
 
@@ -244,7 +246,8 @@ docs/portfolio/           Case study, demo script, interview notes, validation
 - Reviewer roles are validated but not authenticated; authentication and multi-tenancy are out of
   scope.
 - There are no real integrations, queues, messages, patient data, or autonomous workflow changes.
-- The public Python bundle is approximately 431 MB, near Vercel's 500 MB function limit.
+- The separate public API bundle is approximately 432 MB and should be split into a lighter API and
+  analytical workers before further dependency growth.
 
 ## Licence and dependency note
 

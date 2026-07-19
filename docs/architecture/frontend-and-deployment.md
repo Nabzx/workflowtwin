@@ -95,10 +95,10 @@ fingerprints. The UI never receives local paths.
 
 Local development runs Vite and FastAPI separately, with Vite proxying `/api` and
 health requests. Docker Compose adds PostgreSQL and serves a production frontend
-build through Nginx. Unified deployment builds Vite assets first and serves them
-beside the versioned API. The verified Vercel runtime uses one Python function; a
-Render blueprint provides the rebuildable container alternative. A single origin
-removes cross-origin complexity while configured CORS supports local development.
+build through Nginx. The verified Vercel setup uses a static Vite project rooted at
+`apps/web` and a separate FastAPI project. The frontend receives the API origin through
+`VITE_API_BASE_URL`; FastAPI allows only the configured frontend origin. The unified
+Docker image and Render blueprint remain rebuildable container alternatives.
 
 The deployed demo intentionally does not depend on persistent writable storage.
 Prepared analytics are immutable and pilot state resets on restart or through the
