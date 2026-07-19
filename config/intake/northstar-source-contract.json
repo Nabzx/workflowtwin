@@ -1,0 +1,14 @@
+{
+  "allowed_fields": ["referral_form", "supporting_document", "source_acknowledgement", "routing_contact"],
+  "conflict_policy_version": "northstar-conflict-policy-v2",
+  "contract_id": "northstar-intake-contract",
+  "contract_version": "northstar-source-contract-v2",
+  "fictional_declaration": "Fictional Northstar administrative data; no real patient records.",
+  "freshness_tolerance_minutes": 240,
+  "metadata": {"administrative_only": true, "product_name": "Northstar intake contract"},
+  "prohibited_fields": ["direct identifiers", "medical content", "protected attributes"],
+  "provenance_required": true,
+  "snapshot_schema_version": 2,
+  "state_vocabulary": ["present", "absent", "unknown", "not_applicable", "pending_source_update", "unsupported", "stale", "conflicting", "verification_required"],
+  "supersession_policy_version": "northstar-supersession-v2"
+}
