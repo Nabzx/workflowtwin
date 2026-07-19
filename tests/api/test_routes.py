@@ -30,3 +30,11 @@ async def test_health_reports_liveness_and_environment(client: AsyncClient) -> N
         "version": __version__,
         "environment": "test",
     }
+
+
+@pytest.mark.anyio
+async def test_readiness_reports_seeded_demo(client: AsyncClient) -> None:
+    response = await client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"

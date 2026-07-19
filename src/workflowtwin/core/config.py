@@ -28,6 +28,13 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://workflowtwin:workflowtwin@localhost:5432/workflowtwin",
         description="SQLAlchemy async database URL.",
     )
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    demo_reset_token: str | None = None
+
+    @property
+    def allowed_origins(self) -> tuple[str, ...]:
+        """Return normalized configured browser origins."""
+        return tuple(origin.strip() for origin in self.cors_origins.split(",") if origin.strip())
 
 
 @lru_cache
