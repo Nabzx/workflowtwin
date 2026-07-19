@@ -1,0 +1,23 @@
+{
+  "action_type": "create_mock_administrative_task",
+  "daily_review_minutes": 288.0,
+  "false_positive_review_minutes_per_100_cases_maximum": 15.0,
+  "maximum_duplicate_action_rate": 0.05,
+  "maximum_expiry_rate": 0.05,
+  "maximum_mock_system_failure_rate": 0.01,
+  "maximum_queue_depth": 75,
+  "maximum_rollback_failure_rate": 0.0,
+  "maximum_surfaced_coverage": 0.2,
+  "maximum_unresolved_drafts": 75,
+  "minimum_audit_completeness": 1.0,
+  "minimum_mock_system_availability": 0.99,
+  "minimum_policy_compliance": 1.0,
+  "minimum_precision": 0.9,
+  "minimum_recall": 0.72,
+  "permitted_reviewer_roles": ["fictional_admin_reviewer", "fictional_pilot_supervisor"],
+  "policy_version": "northstar-fictional-pilot-policy-v1",
+  "review_minutes_per_draft": 4.0,
+  "review_slo_minutes": 240.0,
+  "rollback_required": true,
+  "supported_detector": "completeness-review-detector-v1"
+}

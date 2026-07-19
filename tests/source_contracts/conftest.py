@@ -19,7 +19,7 @@ from workflowtwin.synthetic.presets import GenerationPreset, config_for_preset
 
 @pytest.fixture
 def requirements() -> AdministrativeRequirementsContract:
-    return load_requirements(Path("config/shadow/northstar-requirements-v2.json"))
+    return load_requirements(Path("config/intake/northstar-requirements.json"))
 
 
 @pytest.fixture
