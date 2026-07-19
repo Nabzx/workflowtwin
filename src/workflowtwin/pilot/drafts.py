@@ -50,8 +50,7 @@ def create_draft(
             requirement_id=next(
                 reference
                 for reference in recommendation.requirement_references
-                if field_id.replace("_", "-") in reference
-                or field_id == "supporting_document"
+                if field_id.replace("_", "-") in reference or field_id == "supporting_document"
             ),
         )
         for field_id in recommendation.missing_field_ids

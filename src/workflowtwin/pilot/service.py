@@ -44,6 +44,24 @@ class PilotService:
         self.actions: list[PilotAction] = []
         self.rollbacks: list[PilotRollback] = []
         self.audit_records: tuple[PilotAuditRecord, ...] = ()
+        for recommendation in sorted(recommendations, key=lambda item: item.recommendation_id):
+            self._audit(
+                occurred_at=recommendation.detected_at,
+                actor_role="workflowtwin_system",
+                action="recommendation_surfaced",
+                object_id=recommendation.recommendation_id,
+                input_references=recommendation.source_references,
+                output_references=(recommendation.recommendation_id,),
+            )
+        for draft in sorted(drafts, key=lambda item: item.draft_id):
+            self._audit(
+                occurred_at=draft.created_at,
+                actor_role="workflowtwin_system",
+                action="draft_created",
+                object_id=draft.draft_id,
+                input_references=(draft.recommendation_id,),
+                output_references=(draft.current_revision_id,),
+            )
 
     def recommendation(self, recommendation_id: str) -> PilotRecommendation:
         try:
@@ -141,9 +159,7 @@ class PilotService:
         )
         return review
 
-    def commit_approved(
-        self, draft_id: str, *, review_id: str, acted_at: datetime
-    ) -> PilotAction:
+    def commit_approved(self, draft_id: str, *, review_id: str, acted_at: datetime) -> PilotAction:
         draft = self.draft(draft_id)
         review = self._review(review_id)
         if draft.status not in {DraftStatus.APPROVED, DraftStatus.COMMITTED}:
@@ -175,9 +191,7 @@ class PilotService:
             review_id=review_id,
             action_type=self.policy.action_type,
             status=(
-                PilotActionStatus.COMMITTED
-                if created
-                else PilotActionStatus.DUPLICATE_SUPPRESSED
+                PilotActionStatus.COMMITTED if created else PilotActionStatus.DUPLICATE_SUPPRESSED
             ),
             mock_task_id=record.task_id,
             acted_at=acted_at,

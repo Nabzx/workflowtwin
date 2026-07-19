@@ -237,6 +237,8 @@ class PilotMetrics(PilotModel):
     incoming_cases: int
     detector_positives: int
     detector_positive_coverage: float
+    detector_precision: float | None
+    detector_recall: float | None
     recommendations_entering_pilot: int
     surfaced_recommendation_coverage: float
     drafts_created: int
@@ -256,10 +258,12 @@ class PilotMetrics(PilotModel):
     rejection_rate: float | None
     mean_time_to_review_minutes: float | None
     p95_review_latency_minutes: float | None
+    review_slo_compliance: float | None
     mean_time_to_approval_minutes: float | None
     mean_time_to_task_creation_minutes: float | None
     review_minutes: float
     false_positive_review_minutes: float
+    false_positive_review_minutes_per_100_cases: float
     maximum_queue_depth: int
     unresolved_drafts: int
     policy_compliance: float
@@ -268,6 +272,12 @@ class PilotMetrics(PilotModel):
     rollback_success_rate: float | None
     expiry_rate: float
     duplicate_action_rate: float
+    mock_system_availability: float
+    deterministic_replay: bool
+    clinical_fields_accessed: int = 0
+    external_communication_attempts: int = 0
+    operational_workflow_mutations: int = 0
+    actions_without_approval: int = 0
 
 
 class PilotGateResult(PilotModel):
