@@ -7,6 +7,7 @@ import { OverviewPage } from "../pages/OverviewPage";
 import { OpportunityPage } from "../pages/OpportunityPage";
 import { PilotPage } from "../pages/PilotPage";
 import { EvidencePage } from "../pages/EvidencePage";
+import { EngineeringPage } from "../pages/EngineeringPage";
 import { AuditPage } from "../pages/AuditPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
 import { WorkflowPage } from "../pages/WorkflowPage";
@@ -66,9 +67,7 @@ export function App() {
           <Route path="/simulation" element={<SimulationPage />} />
           <Route path="/pilot" element={<PilotPage />} />
           <Route path="/audit" element={<AuditPage />} />
-          {navigationItems.filter((item) => !["/", "/workflow", "/evidence", "/opportunity", "/simulation", "/pilot", "/audit"].includes(item.path)).map((item) => (
-            <Route key={item.path} path={item.path} element={<PlaceholderPage title={item.label} />} />
-          ))}
+          <Route path="/engineering" element={<EngineeringPage />} />
           <Route path="*" element={<PlaceholderPage title="Page not found" />} />
         </Routes>
       </main>
