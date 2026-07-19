@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from workflowtwin.pilot.demo import build_demo_pilot
+from workflowtwin.pilot.pipeline import run_supported_analysis_pipeline
 from workflowtwin.pilot.reporting import write_pilot_artifacts
 
 
@@ -51,6 +52,11 @@ def run_demo(args: argparse.Namespace) -> int:
         "pilot_report": "pilot-report.md",
         "api_command": "uv run workflowtwin serve",
         "no_message_sent": True,
+        "pipeline": (
+            {"heavy_analysis_completed": False}
+            if args.skip_heavy_analysis
+            else run_supported_analysis_pipeline()
+        ),
     }
     manifest_path.write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"

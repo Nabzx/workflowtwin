@@ -6,7 +6,7 @@ import pytest
 
 from workflowtwin.core.fingerprint import fingerprint
 from workflowtwin.pilot.audit import verify_pilot_audit
-from workflowtwin.pilot.drafts import create_draft
+from workflowtwin.pilot.drafts import create_draft, revise_draft
 from workflowtwin.pilot.mock_system import (
     InMemoryMockReferralSystem,
     MockTaskNotFoundError,
@@ -191,3 +191,69 @@ def test_mock_system_rejects_unknown_tasks() -> None:
     system = InMemoryMockReferralSystem()
     with pytest.raises(MockTaskNotFoundError, match="unknown"):
         system.read_task("missing")
+
+
+def test_expiry_retraction_and_mock_update_lifecycle(
+    pilot_recommendation: PilotRecommendation,
+    v2_source: tuple[tuple[IncomingReferralSnapshotV2, ...], tuple[object, ...]],
+) -> None:
+    snapshot = v2_source[0][0]
+    service, draft_id = _service(pilot_recommendation, snapshot)
+    draft = service.draft(draft_id)
+    assert service.expire_due(as_of=draft.expires_at - timedelta(seconds=1)) == ()
+    assert service.expire_due(as_of=draft.expires_at) == (draft_id,)
+    assert service.draft(draft_id).status is DraftStatus.EXPIRED
+
+    other, other_id = _service(pilot_recommendation, snapshot)
+    retracted = other.retract(
+        other_id,
+        retracted_at=draft.created_at + timedelta(minutes=3),
+        actor_role="workflowtwin_system",
+        reason="superseding source evidence resolved concern",
+    )
+    assert retracted.status is DraftStatus.RETRACTED
+    assert other.recommendation(retracted.recommendation_id).current is False
+    with pytest.raises(ValueError, match="current state"):
+        other.retract(
+            other_id,
+            retracted_at=draft.created_at + timedelta(minutes=4),
+            actor_role="workflowtwin_system",
+            reason="duplicate",
+        )
+
+    system = InMemoryMockReferralSystem()
+    record, _ = system.create_task(
+        draft=draft,
+        idempotency_key="mock-update-key",
+        actor_role="fictional_admin_reviewer",
+        occurred_at=draft.created_at + timedelta(minutes=1),
+    )
+    edited = revise_draft(
+        draft,
+        editor_role="fictional_admin_reviewer",
+        revised_at=draft.created_at + timedelta(minutes=2),
+        change_reason="approved wording",
+        heading="Updated administrative heading",
+    )
+    updated = system.update_approved_draft(
+        record.task_id,
+        draft=edited,
+        actor_role="fictional_admin_reviewer",
+        reason="approved current revision",
+        occurred_at=draft.created_at + timedelta(minutes=3),
+    )
+    assert updated.revision_id == edited.current_revision_id
+    system.cancel_task(
+        record.task_id,
+        actor_role="fictional_admin_reviewer",
+        reason="temporary cancellation",
+        occurred_at=draft.created_at + timedelta(minutes=4),
+    )
+    ready = system.mark_ready_for_manual_sending(
+        record.task_id,
+        actor_role="fictional_admin_reviewer",
+        reason="human re-confirmed readiness",
+        occurred_at=draft.created_at + timedelta(minutes=5),
+    )
+    assert ready.status is MockTaskStatus.READY_FOR_MANUAL_SENDING
+    assert ready.message_sent is False

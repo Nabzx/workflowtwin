@@ -99,6 +99,15 @@ def test_approval_preconditions_enforce_role_revision_and_conflicts(
             revision_id=draft.current_revision_id,
             reviewer_role="fictional_admin_reviewer",
         )
+    with pytest.raises(ValueError, match="predate"):
+        validate_approval_preconditions(
+            policy=policy,
+            recommendation=pilot_recommendation,
+            draft=draft,
+            revision_id=draft.current_revision_id,
+            reviewer_role="fictional_admin_reviewer",
+            reviewed_at=draft.created_at - timedelta(seconds=1),
+        )
 
 
 def test_pilot_audit_chain_detects_tampering(

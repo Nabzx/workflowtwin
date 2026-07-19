@@ -104,6 +104,54 @@ class PilotService:
         )
         return updated
 
+    def expire_due(self, *, as_of: datetime) -> tuple[str, ...]:
+        expired: list[str] = []
+        for draft_id, draft in sorted(self.drafts.items()):
+            if draft.status in {DraftStatus.AWAITING_REVIEW, DraftStatus.EDITED} and (
+                as_of >= draft.expires_at
+            ):
+                self.drafts[draft_id] = draft.model_copy(update={"status": DraftStatus.EXPIRED})
+                expired.append(draft_id)
+                self._audit(
+                    occurred_at=as_of,
+                    actor_role="workflowtwin_system",
+                    action="draft_expired",
+                    object_id=draft_id,
+                    reason_codes=("review_window_elapsed",),
+                )
+        return tuple(expired)
+
+    def retract(
+        self,
+        draft_id: str,
+        *,
+        retracted_at: datetime,
+        actor_role: str,
+        reason: str,
+    ) -> DraftMissingInformationRequest:
+        draft = self.draft(draft_id)
+        if draft.status not in {
+            DraftStatus.AWAITING_REVIEW,
+            DraftStatus.EDITED,
+            DraftStatus.APPROVED,
+        }:
+            raise ValueError("draft cannot be retracted in its current state")
+        recommendation = self.recommendation(draft.recommendation_id)
+        self.recommendations[recommendation.recommendation_id] = recommendation.model_copy(
+            update={"current": False}
+        )
+        updated = draft.model_copy(update={"status": DraftStatus.RETRACTED})
+        self.drafts[draft_id] = updated
+        self._audit(
+            occurred_at=retracted_at,
+            actor_role=actor_role,
+            action="draft_retracted",
+            object_id=draft_id,
+            input_references=(recommendation.snapshot_id,),
+            reason_codes=(reason,),
+        )
+        return updated
+
     def review(
         self,
         draft_id: str,

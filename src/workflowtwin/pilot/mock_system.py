@@ -83,6 +83,54 @@ class InMemoryMockReferralSystem:
             action="cancelled",
         )
 
+    def update_approved_draft(
+        self,
+        task_id: str,
+        *,
+        draft: DraftMissingInformationRequest,
+        actor_role: str,
+        reason: str,
+        occurred_at: datetime,
+    ) -> MockReferralSystemRecord:
+        current = self.read_task(task_id)
+        revision = next(
+            item for item in draft.revisions if item.revision_id == draft.current_revision_id
+        )
+        history = self._history_item(
+            task_id=task_id,
+            index=len(current.history) + 1,
+            occurred_at=occurred_at,
+            actor_role=actor_role,
+            action="approved_draft_updated",
+            reason=reason,
+            previous_status=current.status,
+            new_status=current.status,
+        )
+        updated = current.model_copy(
+            update={
+                "revision_id": draft.current_revision_id,
+                "heading": revision.heading,
+                "body": revision.body,
+                "item_ids": tuple(item.field_id for item in revision.items),
+                "updated_at": occurred_at,
+                "history": (*current.history, history),
+            }
+        )
+        self._records[task_id] = updated
+        return updated
+
+    def mark_ready_for_manual_sending(
+        self, task_id: str, *, actor_role: str, reason: str, occurred_at: datetime
+    ) -> MockReferralSystemRecord:
+        return self._transition(
+            task_id,
+            new_status=MockTaskStatus.READY_FOR_MANUAL_SENDING,
+            actor_role=actor_role,
+            reason=reason,
+            occurred_at=occurred_at,
+            action="marked_ready_for_manual_sending",
+        )
+
     def rollback_task(
         self, task_id: str, *, actor_role: str, reason: str, occurred_at: datetime
     ) -> tuple[MockReferralSystemRecord, bool]:

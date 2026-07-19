@@ -43,6 +43,8 @@ def validate_approval_preconditions(
         raise ValueError("review targets a stale draft revision")
     if reviewed_at is not None and reviewed_at >= draft.expires_at:
         raise ValueError("draft has expired")
+    if reviewed_at is not None and reviewed_at < draft.created_at:
+        raise ValueError("review cannot predate the draft")
     if not recommendation.source_references or not recommendation.requirement_references:
         raise ValueError("recommendation provenance is incomplete")
     return stable_id(

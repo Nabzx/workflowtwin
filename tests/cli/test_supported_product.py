@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from workflowtwin.cli.main import _parser, main
+from workflowtwin.pilot.pipeline import run_supported_analysis_pipeline
 from workflowtwin.synthetic.artifacts import write_dataset
 from workflowtwin.synthetic.generator import SyntheticReferralGenerator
 from workflowtwin.synthetic.presets import GenerationPreset, config_for_preset
@@ -88,6 +89,14 @@ def test_main_help_excludes_historical_experiment_commands() -> None:
         "source-contract-build",
     ):
         assert obsolete not in help_text
+
+
+def test_supported_analysis_pipeline_reaches_counterfactual_simulation() -> None:
+    result = run_supported_analysis_pipeline()
+    assert result["heavy_analysis_completed"] is True
+    assert result["fictional_case_count"] == 1000
+    for stage in ("baseline", "process", "opportunity", "simulation"):
+        assert len(str(result[f"{stage}_analysis_fingerprint"])) == 64
 
 
 def test_generate_emits_supported_v2_intake(tmp_path: Path) -> None:
