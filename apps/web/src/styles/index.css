@@ -385,6 +385,18 @@ select { min-height: 38px; padding: 7px 30px 7px 9px; text-transform: none; }
 .fictional-task dt { color: var(--text-muted); font-size: 9px; text-transform: uppercase; }
 .fictional-task dd { margin: 4px 0 0; font-family: var(--font-mono); font-size: 9px; overflow-wrap: anywhere; }
 .fictional-task > p { margin: 0; color: var(--text-muted); font-size: 10px; }
+.fictional-task--rolled-back { background: color-mix(in srgb, var(--warning) 7%, var(--surface)); border-color: color-mix(in srgb, var(--warning) 35%, var(--border)); }
+.fictional-task--rolled-back > div > svg { color: var(--warning); }
+.task-actions { display: flex !important; flex-wrap: wrap; gap: 8px !important; margin-top: 14px; }
+.dialog-backdrop { position: fixed; inset: 0; z-index: 80; display: grid !important; place-items: center; padding: 20px; background: rgb(0 0 0 / 55%); }
+.confirmation-dialog { position: relative; width: min(100%, 480px); padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow); }
+.confirmation-dialog > .icon-button { position: absolute; top: 10px; right: 10px; }
+.confirmation-dialog h2 { margin: 5px 36px 8px 0; font-size: 21px; }
+.confirmation-dialog > p:not(.eyebrow) { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+.confirmation-dialog label { display: grid; gap: 6px; margin: 18px 0; color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.confirmation-dialog textarea { padding: 10px; color: var(--text); text-transform: none; resize: vertical; }
+.confirmation-dialog > div:last-child { display: flex; justify-content: flex-end; gap: 8px; }
+.dialog-error { padding: 8px; color: var(--danger) !important; background: color-mix(in srgb, var(--danger) 10%, transparent); }
 
 @media (max-width: 1120px) {
   .metric-grid--six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
