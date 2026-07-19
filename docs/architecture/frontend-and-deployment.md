@@ -95,14 +95,21 @@ fingerprints. The UI never receives local paths.
 
 Local development runs Vite and FastAPI separately, with Vite proxying `/api` and
 health requests. Docker Compose adds PostgreSQL and serves a production frontend
-build through Nginx. The public demo uses one rebuildable container: Vite assets are
-built first and served by FastAPI beside the versioned API. A single origin removes
-cross-origin complexity while configured CORS still supports local development.
+build through Nginx. Unified deployment builds Vite assets first and serves them
+beside the versioned API. The verified Vercel runtime uses one Python function; a
+Render blueprint provides the rebuildable container alternative. A single origin
+removes cross-origin complexity while configured CORS supports local development.
 
 The deployed demo intentionally does not depend on persistent writable storage.
 Prepared analytics are immutable and pilot state resets on restart or through the
 guarded reset operation. This avoids pretending a free portfolio deployment has
 production durability.
+
+Serverless approval and rollback accept bounded fictional replay state so a fresh
+instance can reconstruct the relevant revision and verify the same action,
+idempotency, and mock-task identifiers atomically. Anonymous production reset is
+disabled. The shared state and audit view can still return to prepared state after
+instance recycling and are explicitly not multi-user infrastructure.
 
 ## Quality strategy
 
@@ -112,4 +119,3 @@ forbidden-content safety, API failure recovery, and responsive smoke paths. Exis
 Python tests continue to cover the domain and API. Accessibility checks combine
 semantic component tests, axe scans, keyboard-focused end-to-end checks, and manual
 contrast and reduced-motion review.
-
