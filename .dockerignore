@@ -13,4 +13,7 @@ build
 dist
 htmlcov
 tests
-
+apps/web/node_modules
+apps/web/dist
+apps/web/playwright-report
+apps/web/test-results
