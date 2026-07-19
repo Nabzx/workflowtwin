@@ -4,9 +4,11 @@ import { NavLink, Route, Routes } from "react-router-dom";
 
 import { navigationItems } from "./routes";
 import { OverviewPage } from "../pages/OverviewPage";
+import { OpportunityPage } from "../pages/OpportunityPage";
 import { EvidencePage } from "../pages/EvidencePage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
 import { WorkflowPage } from "../pages/WorkflowPage";
+import { SimulationPage } from "../pages/SimulationPage";
 
 type Theme = "light" | "dark" | "system";
 
@@ -58,7 +60,9 @@ export function App() {
           <Route path="/" element={<OverviewPage />} />
           <Route path="/workflow" element={<WorkflowPage />} />
           <Route path="/evidence" element={<EvidencePage />} />
-          {navigationItems.filter((item) => !["/", "/workflow", "/evidence"].includes(item.path)).map((item) => (
+          <Route path="/opportunity" element={<OpportunityPage />} />
+          <Route path="/simulation" element={<SimulationPage />} />
+          {navigationItems.filter((item) => !["/", "/workflow", "/evidence", "/opportunity", "/simulation"].includes(item.path)).map((item) => (
             <Route key={item.path} path={item.path} element={<PlaceholderPage title={item.label} />} />
           ))}
           <Route path="*" element={<PlaceholderPage title="Page not found" />} />
