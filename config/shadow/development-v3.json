@@ -1,6 +1,0 @@
-{
-  "datasets": ["development-c", "development-d"],
-  "declaration": "Fictional administrative development splits; no real patient data.",
-  "holdout_access": "prohibited",
-  "protocol_id": "northstar-strict-v3-protocol"
-}

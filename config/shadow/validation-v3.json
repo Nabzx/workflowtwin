@@ -1,6 +1,0 @@
-{
-  "dataset": "validation-v3",
-  "declaration": "Fictional administrative validation split; no real patient data.",
-  "holdout_access": "prohibited_until_validation_passes",
-  "protocol_id": "northstar-strict-v3-protocol"
-}

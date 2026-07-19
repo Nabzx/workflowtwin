@@ -24,7 +24,7 @@ def requirements() -> AdministrativeRequirementsContract:
 
 @pytest.fixture
 def source_definition() -> SourceContractDefinition:
-    return load_source_contract(Path("config/shadow/source-contract-v2.json"))
+    return load_source_contract(Path("config/intake/northstar-source-contract.json"))
 
 
 @pytest.fixture

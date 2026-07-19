@@ -1,8 +1,0 @@
-{
-  "dataset": "holdout-v3",
-  "declaration": "Fictional untouched administrative holdout; no real patient data.",
-  "evaluation_limit": 1,
-  "seed": 808,
-  "status": "registered_unopened",
-  "protocol_id": "northstar-strict-v3-protocol"
-}
