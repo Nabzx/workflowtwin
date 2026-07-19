@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 
 import { navigationItems } from "./routes";
+import { OverviewPage } from "../pages/OverviewPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
 
 type Theme = "light" | "dark" | "system";
@@ -52,7 +53,8 @@ export function App() {
       {menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close navigation" />}
       <main id="main-content" className="main-content">
         <Routes>
-          {navigationItems.map((item) => (
+          <Route path="/" element={<OverviewPage />} />
+          {navigationItems.filter((item) => item.path !== "/").map((item) => (
             <Route key={item.path} path={item.path} element={<PlaceholderPage title={item.label} />} />
           ))}
           <Route path="*" element={<PlaceholderPage title="Page not found" />} />
@@ -73,4 +75,3 @@ function ThemeButton({ theme, onClick }: { theme: Theme; onClick: () => void }) 
     </button>
   );
 }
-
