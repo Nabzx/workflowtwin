@@ -12,7 +12,8 @@ have no pass/fail assertion. Northstar and every dataset and result are fictiona
 | Review response | one local rejection | 0.74 ms |
 | Approved draft action | one local mock task | 0.80 ms |
 | Audit verification | 34 records, 1,000-run mean | 0.69 ms |
-| Last full suite with coverage | 195 passed, 16 PostgreSQL-only skipped | 139.4 s |
+| Full suite with coverage | 198 passed, 16 PostgreSQL-only skipped | 168.1 s |
+| PostgreSQL integration suite | 16 passed on disposable migrated PostgreSQL 17 | 11.8 s |
 
 The pilot seed reports 96.6% precision, 80.0% recall, 24.2% detector-positive coverage, 10.0%
 surfaced coverage, 12 maximum queued drafts, 12 review minutes, two local task commits, one verified

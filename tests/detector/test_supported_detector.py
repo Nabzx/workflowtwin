@@ -10,9 +10,7 @@ from workflowtwin.source_contracts.requirements import AdministrativeRequirement
 
 
 def test_supported_alias_delegates_to_unchanged_strict_v3(
-    v2_source: tuple[
-        tuple[IncomingReferralSnapshotV2, ...], tuple[AdministrativeTruthRecord, ...]
-    ],
+    v2_source: tuple[tuple[IncomingReferralSnapshotV2, ...], tuple[AdministrativeTruthRecord, ...]],
     requirements: AdministrativeRequirementsContract,
 ) -> None:
     detector = CompletenessReviewDetector(requirements)

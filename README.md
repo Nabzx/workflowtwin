@@ -223,8 +223,8 @@ docker compose config
 docker compose build api
 ```
 
-The current local suite passes 198 tests with 16 PostgreSQL-only skips and more than 90% branch
-coverage.
+The current local suite passes 199 tests with 16 PostgreSQL integration tests available separately
+and 91.73% branch coverage.
 The fixed 1,000-case analytical demo reconstructs 17 activities, 23 transitions, and 57 variants;
 strict/governed conformance rates are 36.3%/87.1%. See the focused
 [benchmarks](docs/architecture/pilot-benchmark.md) and existing architecture benchmark documents.

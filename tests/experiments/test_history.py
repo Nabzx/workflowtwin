@@ -17,9 +17,7 @@ FIXTURES = Path("tests/fixtures/experiments")
         ("strict-v3", "strict_v3_validation_failed"),
     ],
 )
-def test_historical_detector_golden_is_readable_and_consistent(
-    name: str, assessment: str
-) -> None:
+def test_historical_detector_golden_is_readable_and_consistent(name: str, assessment: str) -> None:
     golden = load_detector_golden(FIXTURES / f"{name}.json")
     assert golden.detector_version == name
     assert golden.assessment_result == assessment

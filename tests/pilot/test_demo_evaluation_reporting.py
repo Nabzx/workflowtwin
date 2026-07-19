@@ -59,9 +59,7 @@ def test_pilot_artifacts_are_small_explicit_and_protected(tmp_path: Path) -> Non
 
 
 def test_compact_ui_seed_matches_supported_demo() -> None:
-    seed = json.loads(
-        Path("data/demo/northstar-pilot-ui-seed-v1.json").read_text(encoding="utf-8")
-    )
+    seed = json.loads(Path("data/demo/northstar-pilot-ui-seed-v1.json").read_text(encoding="utf-8"))
     run, _ = build_demo_pilot()
     assert seed["fictional"] is True
     assert seed["run_id"] == run.run_id
