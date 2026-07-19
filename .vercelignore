@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+.coverage
+.mypy_cache
+.pytest_cache
+.ruff_cache
+artifacts
+apps/web/node_modules
+apps/web/playwright-report
+apps/web/test-results
+htmlcov
+tests

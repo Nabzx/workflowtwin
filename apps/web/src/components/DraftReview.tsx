@@ -62,7 +62,7 @@ export function DraftReview({ recommendation, draft, onAction }: { recommendatio
     const validation = validateDraft(current.heading, current.body);
     if (validation) { setFeedback(validation); return; }
     try {
-      const action = await approve.mutateAsync({ draftId: draft.draft_id, payload: { revision_id: draft.current_revision_id, reviewer_role: REVIEWER, decided_at: fictionalTime(draft), structured_reason: reason, review_minutes: 4 } });
+      const action = await approve.mutateAsync({ draftId: draft.draft_id, payload: { revision_id: draft.current_revision_id, reviewer_role: REVIEWER, decided_at: fictionalTime(draft), structured_reason: reason, review_minutes: 4, revision_replay: { editor_role: REVIEWER, revised_at: fictionalTime(draft), change_reason: "Reviewer clarified administrative wording", heading: current.heading, body: current.body } } });
       onAction(action); setFeedback("Approved and committed to the fictional local task queue. No message was sent.");
     } catch (error) { handleError(error); }
   };

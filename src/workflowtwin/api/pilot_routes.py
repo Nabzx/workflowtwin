@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException, Request, status
 
 from workflowtwin.api.pilot_schemas import (
+    DraftApprovalRequest,
     DraftDecisionRequest,
     DraftEditRequest,
     PilotSummaryResponse,
@@ -152,12 +153,34 @@ def _decide(
     )
 
 
+def _restore_revision(
+    service: PilotService, draft_id: str, payload: DraftApprovalRequest
+) -> None:
+    draft = service.draft(draft_id)
+    if draft.current_revision_id == payload.revision_id:
+        return
+    replay = payload.revision_replay
+    if replay is None:
+        raise ValueError("review targets a stale draft revision")
+    updated = service.edit_draft(
+        draft_id,
+        editor_role=replay.editor_role,
+        revised_at=replay.revised_at,
+        change_reason=replay.change_reason,
+        heading=replay.heading,
+        body=replay.body,
+    )
+    if updated.current_revision_id != payload.revision_id:
+        raise ValueError("revision replay did not match the reviewed revision")
+
+
 @router.post("/drafts/{draft_id}/approve", response_model=PilotAction)
 async def approve_draft(
-    request: Request, draft_id: str, payload: DraftDecisionRequest
+    request: Request, draft_id: str, payload: DraftApprovalRequest
 ) -> PilotAction:
     _, service = _state(request)
     try:
+        _restore_revision(service, draft_id, payload)
         review = _decide(service, draft_id, payload, PilotReviewDecisionType.APPROVE)
         return service.commit_approved(
             draft_id, review_id=review.review_id, acted_at=payload.decided_at
@@ -196,23 +219,52 @@ async def rollback_draft(
     try:
         service.draft(draft_id)
         action = next(
-            item
-            for item in reversed(service.actions)
-            if item.draft_id == draft_id and item.mock_task_id is not None
+            (
+                item
+                for item in reversed(service.actions)
+                if item.draft_id == draft_id and item.mock_task_id is not None
+            ),
+            None,
         )
+        if action is None and payload.action_replay is not None:
+            expected = payload.action_replay
+            draft = service.draft(draft_id)
+            if draft.current_revision_id != expected.revision_id:
+                service.edit_draft(
+                    draft_id,
+                    editor_role=expected.actor_role,
+                    revised_at=expected.acted_at,
+                    change_reason="Verified ephemeral rollback replay",
+                    heading="Administrative supporting document check",
+                )
+            review = service.review(
+                draft_id,
+                revision_id=expected.revision_id,
+                reviewer_role=expected.actor_role,
+                decision=PilotReviewDecisionType.APPROVE,
+                decided_at=expected.acted_at,
+                structured_reason="Verified fictional action replay for rollback",
+                review_minutes=0,
+            )
+            action = service.commit_approved(
+                draft_id, review_id=review.review_id, acted_at=expected.acted_at
+            )
+            if (
+                action.action_id != expected.action_id
+                or action.idempotency_key != expected.idempotency_key
+                or action.mock_task_id != expected.mock_task_id
+            ):
+                raise PermissionError("action replay did not match the approved fictional action")
+        if action is None:
+            raise PilotNotFoundError("draft has no committed pilot action")
         return service.rollback(
             action.action_id,
             actor_role=payload.actor_role,
             reason=payload.reason,
             rolled_back_at=payload.rolled_back_at,
         )
-    except (PilotNotFoundError, StopIteration, ValueError) as error:
-        translated = (
-            PilotNotFoundError("draft has no committed pilot action")
-            if isinstance(error, StopIteration)
-            else error
-        )
-        raise _translate_error(translated) from error
+    except (PilotNotFoundError, PermissionError, ValueError) as error:
+        raise _translate_error(error) from error
 
 
 @router.get("/audit", response_model=tuple[PilotAuditRecord, ...])

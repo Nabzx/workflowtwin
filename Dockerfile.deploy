@@ -1,0 +1,30 @@
+FROM node:22-alpine AS frontend
+
+WORKDIR /frontend
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci
+COPY apps/web/ ./
+RUN npm run build
+
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    WORKFLOWTWIN_WEB_DIST_PATH=/app/apps/web/dist
+
+WORKDIR /app
+RUN addgroup --system workflowtwin \
+    && adduser --system --ingroup workflowtwin workflowtwin
+
+COPY pyproject.toml README.md ./
+COPY src ./src
+COPY config ./config
+COPY data ./data
+COPY --from=frontend /frontend/dist ./apps/web/dist
+RUN pip install --no-cache-dir .
+
+USER workflowtwin
+EXPOSE 10000
+
+CMD ["sh", "-c", "uvicorn workflowtwin.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

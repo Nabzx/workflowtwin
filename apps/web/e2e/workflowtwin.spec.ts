@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ request }) => {
+  if (process.env.PLAYWRIGHT_SKIP_RESET === "1") return;
   const response = await request.post("http://127.0.0.1:8012/api/v1/demo/reset", { data: {} });
   expect(response.ok()).toBeTruthy();
 });

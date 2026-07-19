@@ -5,6 +5,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from workflowtwin.pilot.models import (
+    PilotAction,
     PilotAssessment,
     PilotGateResult,
     PilotMetrics,
@@ -53,7 +54,12 @@ class DraftDecisionRequest(PilotApiModel):
     review_minutes: float = Field(ge=0, le=240)
 
 
+class DraftApprovalRequest(DraftDecisionRequest):
+    revision_replay: DraftEditRequest | None = None
+
+
 class RollbackRequest(PilotApiModel):
     actor_role: str
     rolled_back_at: datetime
     reason: str = Field(min_length=3, max_length=240)
+    action_replay: PilotAction | None = None

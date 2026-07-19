@@ -11,6 +11,7 @@ from workflowtwin.api.demo_routes import router as demo_router
 from workflowtwin.api.pilot_routes import router as pilot_router
 from workflowtwin.api.routes import router
 from workflowtwin.core.config import Settings, get_settings
+from workflowtwin.core.frontend import install_frontend_entry, install_frontend_fallback
 from workflowtwin.core.logging import configure_logging
 from workflowtwin.core.observability import request_observability
 from workflowtwin.pilot.demo import build_demo_pilot
@@ -43,9 +44,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["content-type", "x-request-id"],
     )
     application.middleware("http")(request_observability)
+    frontend_index = install_frontend_entry(application, runtime_settings.web_dist_path)
     application.include_router(router)
     application.include_router(demo_router)
     application.include_router(pilot_router)
+    install_frontend_fallback(application, frontend_index)
 
     structlog.get_logger(__name__).info(
         "application_configured",

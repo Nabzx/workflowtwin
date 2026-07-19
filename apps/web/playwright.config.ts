@@ -8,6 +8,7 @@ export default defineConfig({
   workers: 1,
   retries: process.env.CI ? 2 : 0,
   reporter: "html",
+  expect: { timeout: process.env.PLAYWRIGHT_BASE_URL ? 15_000 : 5_000 },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:5182",
     trace: "retain-on-failure",
@@ -16,7 +17,7 @@ export default defineConfig({
     { name: "laptop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
     { name: "tablet", use: { ...devices["Desktop Chrome"], viewport: { width: 820, height: 1180 }, hasTouch: true } },
   ],
-  webServer: [
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : [
     {
       command: "UV_CACHE_DIR=/tmp/workflowtwin-uv-cache uv --directory ../.. run workflowtwin serve --host 127.0.0.1 --port 8012",
       url: "http://127.0.0.1:8012/ready",

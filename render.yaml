@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: workflowtwin
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.deploy
+    dockerContext: .
+    healthCheckPath: /ready
+    autoDeployTrigger: commit
+    envVars:
+      - key: WORKFLOWTWIN_ENVIRONMENT
+        value: production
+      - key: WORKFLOWTWIN_LOG_LEVEL
+        value: INFO
+      - key: WORKFLOWTWIN_SERVICE_NAME
+        value: workflowtwin-api

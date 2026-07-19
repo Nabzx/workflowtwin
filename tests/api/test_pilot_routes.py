@@ -3,7 +3,10 @@
 from datetime import datetime, timedelta
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
+
+from workflowtwin.core.config import Settings
+from workflowtwin.main import create_app
 
 
 async def _awaiting_draft(client: AsyncClient) -> dict[str, object]:
@@ -149,3 +152,54 @@ async def test_rollback_and_gate_endpoints(client: AsyncClient) -> None:
     gates = await client.get("/api/v1/pilot/gates")
     assert gates.status_code == 200
     assert len(gates.json()) >= 20
+
+
+@pytest.mark.anyio
+async def test_ephemeral_instances_replay_bounded_revision_and_action() -> None:
+    settings = Settings(_env_file=None, environment="production", log_level="ERROR")
+
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app(settings)), base_url="http://edit-instance"
+    ) as edit_instance:
+        draft = await _awaiting_draft(edit_instance)
+        revised_at = datetime.fromisoformat(str(draft["created_at"])) + timedelta(minutes=2)
+        edit_payload = {
+            "editor_role": "fictional_admin_reviewer",
+            "revised_at": revised_at.isoformat(),
+            "change_reason": "clearer administrative heading",
+            "heading": "Administrative document confirmation",
+        }
+        edited = await edit_instance.post(
+            f"/api/v1/pilot/drafts/{draft['draft_id']}/edit", json=edit_payload
+        )
+        current = edited.json()
+
+    approval_payload = _decision(current)
+    approval_payload["revision_replay"] = edit_payload
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app(settings)), base_url="http://approval-instance"
+    ) as approval_instance:
+        approved = await approval_instance.post(
+            f"/api/v1/pilot/drafts/{draft['draft_id']}/approve", json=approval_payload
+        )
+        action = approved.json()
+
+    assert approved.status_code == 200
+    assert action["revision_id"] == current["current_revision_id"]
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app(settings)), base_url="http://rollback-instance"
+    ) as rollback_instance:
+        rolled_back = await rollback_instance.post(
+            f"/api/v1/pilot/drafts/{draft['draft_id']}/rollback",
+            json={
+                "actor_role": "fictional_pilot_supervisor",
+                "rolled_back_at": (
+                    datetime.fromisoformat(action["acted_at"]) + timedelta(minutes=3)
+                ).isoformat(),
+                "reason": "ephemeral deployment verification",
+                "action_replay": action,
+            },
+        )
+
+    assert rolled_back.status_code == 200
+    assert rolled_back.json()["action_id"] == action["action_id"]

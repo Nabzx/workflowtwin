@@ -18,7 +18,7 @@ export function FictionalTask({ action }: { action: PilotAction }) {
   const submit = async () => {
     if (reason.trim().length < 3) { setError("Provide a rollback reason of at least three characters."); return; }
     try {
-      const result = await mutation.mutateAsync({ draftId: action.draft_id, payload: { actor_role: "fictional_pilot_supervisor", rolled_back_at: new Date(new Date(action.acted_at).getTime() + 3 * 60_000).toISOString(), reason } });
+      const result = await mutation.mutateAsync({ draftId: action.draft_id, payload: { actor_role: "fictional_pilot_supervisor", rolled_back_at: new Date(new Date(action.acted_at).getTime() + 3 * 60_000).toISOString(), reason, action_replay: action } });
       setRollback(result); setDialogOpen(false); setError(null);
     } catch (failure) { setError(failure instanceof ApiError ? failure.message : "Rollback failed. The fictional task remains unchanged."); }
   };

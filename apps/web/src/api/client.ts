@@ -56,7 +56,7 @@ export const api = {
   audit: (signal?: AbortSignal) => get("/api/v1/pilot/audit", auditSchema, signal),
   review: (recommendationId: string, payload: ReviewPayload) => post(`/api/v1/pilot/recommendations/${encodeURIComponent(recommendationId)}/review`, reviewSchema, payload),
   editDraft: (draftId: string, payload: EditDraftPayload) => post(`/api/v1/pilot/drafts/${encodeURIComponent(draftId)}/edit`, draftSchema, payload),
-  approveDraft: (draftId: string, payload: DecisionPayload) => post(`/api/v1/pilot/drafts/${encodeURIComponent(draftId)}/approve`, actionSchema, payload),
+  approveDraft: (draftId: string, payload: ApprovalPayload) => post(`/api/v1/pilot/drafts/${encodeURIComponent(draftId)}/approve`, actionSchema, payload),
   rejectDraft: (draftId: string, payload: DecisionPayload) => post(`/api/v1/pilot/drafts/${encodeURIComponent(draftId)}/reject`, reviewSchema, payload),
   cancelDraft: (draftId: string, payload: DecisionPayload) => post(`/api/v1/pilot/drafts/${encodeURIComponent(draftId)}/cancel`, reviewSchema, payload),
   rollbackDraft: (draftId: string, payload: RollbackPayload) => post(`/api/v1/pilot/drafts/${encodeURIComponent(draftId)}/rollback`, rollbackSchema, payload),
@@ -68,6 +68,10 @@ export interface DecisionPayload {
   decided_at: string;
   structured_reason: string;
   review_minutes: number;
+}
+
+export interface ApprovalPayload extends DecisionPayload {
+  revision_replay?: EditDraftPayload;
 }
 
 export interface ReviewPayload extends DecisionPayload {
@@ -86,5 +90,5 @@ export interface RollbackPayload {
   actor_role: string;
   rolled_back_at: string;
   reason: string;
+  action_replay?: import("./schemas").PilotAction;
 }
-
