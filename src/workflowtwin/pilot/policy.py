@@ -1,5 +1,6 @@
 """Versioned pilot policy loading and human-approval preconditions."""
 
+from datetime import datetime
 from pathlib import Path
 
 from workflowtwin.core.fingerprint import fingerprint, stable_id
@@ -28,6 +29,7 @@ def validate_approval_preconditions(
     draft: DraftMissingInformationRequest,
     revision_id: str,
     reviewer_role: str,
+    reviewed_at: datetime | None = None,
 ) -> str:
     if reviewer_role not in policy.permitted_reviewer_roles:
         raise PermissionError("reviewer role is not permitted by the fictional pilot policy")
@@ -39,6 +41,8 @@ def validate_approval_preconditions(
         raise ValueError("draft is not awaiting a review decision")
     if draft.current_revision_id != revision_id:
         raise ValueError("review targets a stale draft revision")
+    if reviewed_at is not None and reviewed_at >= draft.expires_at:
+        raise ValueError("draft has expired")
     if not recommendation.source_references or not recommendation.requirement_references:
         raise ValueError("recommendation provenance is incomplete")
     return stable_id(
